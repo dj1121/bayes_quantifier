@@ -3,16 +3,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from LOTlib3.DataAndObjects import FunctionData
 import pandas as pd
-
-colors = {'red': 0, 'blue': 1, 'green': 2, 'yellow': 3}
-ans = {'c': True, 'm': False}
-
-
-# Import data here and convert to numbered
-
-
-# SETS are implemented as LISTS since we want to allow duplicates (python sets don't allow duplicates)
-data = [FunctionData(input=[[0,0,0,0],[1,1]], output=True, alpha=0.95)] # 4 red, 2 blue
+data = [FunctionData(input=[set([1,2,3]),set([1,2])], output=True, alpha=0.95)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +11,11 @@ data = [FunctionData(input=[[0,0,0,0],[1,1]], output=True, alpha=0.95)] # 4 red,
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from LOTlib3.Grammar import Grammar
 from LOTlib3.Eval import primitive
-import primitives
+
+# Define some new primitives not included with LOTLib initially
+@primitive
+def cardinalityx_(A, x):
+    return len(A) == x
 
 # Start symbol
 grammar = Grammar(start='EXPR')
