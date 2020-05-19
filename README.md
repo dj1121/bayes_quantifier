@@ -4,7 +4,7 @@
 
 ## Requirements
 
-Python 3+, [Python Multisets](https://pypi.org/project/multiset/), [LOTLib3](https://github.com/piantado/LOTlib3)
+Python 3+, [multiset](https://pypi.org/project/multiset/), [LOTLib3](https://github.com/piantado/LOTlib3)
 
 ## Running an Experiment
 
