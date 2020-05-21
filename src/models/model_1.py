@@ -35,6 +35,8 @@ with open('./data/monotone/12h05.39.006.csv') as f:
         if len(x) > 0 and len(y) > 0 and out != None:  
             data.append(FunctionData(input = [x,y], output=out, alpha=0.95)) # Put into format needed for LOTLib
 
+    # data = load_data.load(filename or directory)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Grammar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,25 +45,27 @@ from LOTlib3.Eval import primitive
 import primitives
 
 # Start symbol
-grammar = Grammar(start='EXPR')
+grammar = Grammar(start='BOOL')
 
 # Rules ending in nonterminals
-grammar.add_rule('EXPR', 'intersection_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'union_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'setdifference_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'issubset_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'equal_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'empty_', ['SET'], 1.0)
-grammar.add_rule('EXPR', 'cardinality_', ['SET'], 1.0)
-grammar.add_rule('EXPR', 'cardinalitylt_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'cardinalityeq_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'cardinalitygt_', ['SET', 'SET'], 1.0)
-grammar.add_rule('EXPR', 'cardinalityx_', ['SET', 'NUM'], 1.0)
+grammar.add_rule('BOOL', 'issubset_', ['SET', 'SET'], 1.0)
+grammar.add_rule('BOOL', 'issuper_', ['SET', 'SET'], 1.0)
+grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
+grammar.add_rule('BOOL', 'lt', ['NUM', 'NUM'], 1.0)
+grammar.add_rule('BOOL', 'gt', ['NUM', 'NUM'], 1.0)
+grammar.add_rule('BOOL', 'num_eq', ['NUM', 'NUM'], 1.0)
+
+grammar.add_rule('NUM', 'cardinality_', ['SET'], 1.0)
+
+grammar.add_rule('SET', 'intersection_', ['SET', 'SET'], 1.0)
+grammar.add_rule('SET', 'union_', ['SET', 'SET'], 1.0)
+grammar.add_rule('SET', 'setdifference_', ['SET', 'SET'], 1.0)
+
 
 # Rules ending in terminals
 grammar.add_rule('SET', 'A', None, 1.0)
 grammar.add_rule('SET', 'B', None, 1.0)
-for n in range(1,10):
+for n in range(0,10):
         grammar.add_rule('NUM', str(n), None, 1.0)
 
 
@@ -72,30 +76,32 @@ for n in range(1,10):
 from math import log
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 
-class MyHypothesis(LOTHypothesis):
+class QuantHypothesis(LOTHypothesis):
     def __init__(self, **kwargs):
         LOTHypothesis.__init__(self, grammar=grammar, display="lambda A, B: %s", **kwargs)  # display = str(self.value)
         
     def __call__(self, *args):
         try:
-            # try to do it from the superclass
             return LOTHypothesis.__call__(self, *args)
         except ZeroDivisionError:
-            # and if we get an error, return nan
             return float("nan")
 
     def compute_single_likelihood(self, datum):
+
         if self(*datum.input) == datum.output: # pass data input to hypothesis (as a function), goes to "call"
             return log((1.0-datum.alpha)/100. + datum.alpha)
         else:
             return log((1.0-datum.alpha)/100.)
+
+    def weight(self, data):
+        print()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if __name__ == "__main__":
-    h = MyHypothesis()
-    l = h.compute_likelihood(data)
+    h = QuantHypothesis()
     print(h)
+    l = h.compute_likelihood(data)
     print(l)
