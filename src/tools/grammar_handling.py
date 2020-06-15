@@ -1,1 +1,0 @@
-# Set of functions for loading and handling LOT grammars
