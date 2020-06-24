@@ -19,7 +19,6 @@ class HypothesisA(LOTHypothesis):
             return float("nan")
 
     def compute_single_likelihood(self, datum):
-
         if self(*datum.input) == datum.output:
             return log((1.0-datum.alpha)/100. + datum.alpha)
         else:
@@ -27,3 +26,9 @@ class HypothesisA(LOTHypothesis):
 
     def weight(self, data):
         print()
+
+def create_hypothesis(h_type, g):
+    if h_type == "A":
+        return HypothesisA(grammar=g)
+    else:
+        raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')

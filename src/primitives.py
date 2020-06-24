@@ -12,7 +12,7 @@ def issuper_(A, B):
     return A.issuperset(B)
 
 @primitive
-def gt(x, y):
+def gt(x,y):
     return x > y
 
 @primitive
