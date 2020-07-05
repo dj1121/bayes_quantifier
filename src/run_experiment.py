@@ -24,6 +24,8 @@ def parse_args():
     return args
 
 def infer(data, out, h, g):
+    print(h)
+    print(h.compute_prior())
     # print(h.compute_likelihood(data))
 
     # count = Counter()

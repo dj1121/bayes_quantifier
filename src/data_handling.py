@@ -16,7 +16,6 @@ def load(data_dir):
     data = [] # A list of FunctionData objects (what LOTlib uses)
     colors = {"red": 0, "blue": 1, "green": 2, "yellow": 3}
 
-
     # Load all experiments in data directory
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
