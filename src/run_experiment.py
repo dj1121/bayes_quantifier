@@ -26,7 +26,7 @@ def parse_args():
 def infer(data, out, h, g):
     print(h)
     print(h.compute_prior())
-    # print(h.compute_likelihood(data))
+    print(h.compute_likelihood(data))
 
     # count = Counter()
     # for h_i in MetropolisHastingsSampler(h, data, steps=1000):

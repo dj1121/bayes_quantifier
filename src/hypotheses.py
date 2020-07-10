@@ -6,6 +6,8 @@
 # -----------------------------------------------------------
 
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
+from math import log
+import data_handling
 
 
 class HypothesisA(LOTHypothesis):
@@ -24,8 +26,6 @@ class HypothesisA(LOTHypothesis):
         else:
             return log((1.0-datum.alpha)/100.)
 
-    def weight(self, data):
-        print()
 
 def create_hypothesis(h_type, g):
     if h_type == "A":
