@@ -43,7 +43,9 @@ if __name__ == "__main__":
     data = data_handling.load(args.data_dir)
     out = args.out
     grammar = grammars.create_grammar(args.g_type)
-    h = hypotheses.create_hypothesis(args.h_type, grammar, data, args.data_dir)
-    
+    h = hypotheses.create_hypothesis(args.h_type, grammar, args.data_dir)
+
     # Run the main algorithm to do inference
     infer(data, out, h, grammar)
+
+    

@@ -50,25 +50,29 @@ def load(data_dir):
 Enumerate all contexts of objects. Used to get weights of possible
 quantifier meaning.
 """
-def get_num_contexts(data_dir):
+def get_contexts(data_dir):
+
+    objs = set()
+    colors = set()
+
     # Load all experiments in data directory
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
         df = pd.read_csv(open(path, 'r'))
 
         # Get number of objects by searching for "obj" in col names
-        num_objects = 0
         for col_name in df.columns:
             if "obj" in col_name:
-                num_objects += 1
+                objs.add(col_name)
         
         # Get number of colors by searching unique names in "target" col
-        num_colors = 0
-        colors = set()
         df = df.target.dropna()
         for color in df.unique():
             colors.add(color)
-        num_colors = len(colors)
 
-        # Return number of contexts by simple combinatorics
-        return (num_colors)**(num_objects)
+
+    # Generate possible contexts
+    
+
+
+    return 0
