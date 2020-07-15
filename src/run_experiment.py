@@ -18,6 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../data/monotone/")
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../out/")
+    parser.add_argument("-n_colors_context", type=int, help= "Number of colors allowed in each context", default=2)
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     args = parser.parse_args()
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     data = data_handling.load(args.data_dir)
     out = args.out
     grammar = grammars.create_grammar(args.g_type)
-    h = hypotheses.create_hypothesis(args.h_type, grammar, args.data_dir)
+    h = hypotheses.create_hypothesis(args.h_type, grammar, args.data_dir, args.n_colors_context)
 
     # Run the main algorithm to do inference
     infer(data, out, h, grammar)
