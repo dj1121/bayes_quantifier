@@ -20,7 +20,7 @@ def load(data_dir):
     # Load all experiments in data directory
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
-        df = pd.read_csv(open(path, 'r'))
+        df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
         # Get relevant columns (objs and labels)
         df = df.loc[:, 'obj1':'corrAns'].dropna()
