@@ -13,7 +13,8 @@ import grammars
 import hypotheses
 from collections import Counter
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
-
+from LOTlib3.TopN import TopN
+    
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../data/monotone/")
@@ -24,29 +25,31 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def infer(data, out, h, grammar):
-    print(h)
-    print(h.compute_prior())
-    print(h.compute_likelihood(data))
+def infer(data, out, h0, grammar):
+    print(h0)
+    print(h0.compute_prior())
+    # print(h0.compute_likelihood(data))
 
-    # count = Counter()
-    # for h_i in MetropolisHastingsSampler(h, data, steps=1000):
-    #     count[h_i] += 1
-    
-    # for h_i in sorted(count.keys(), key=lambda x: count[x]):
-    #     print(count[h_i], h_i.posterior_score, h_i)
+    # tn = TopN(N=10) # store the top N
+    # for h in MetropolisHastingsSampler(h0, data, steps=1000):
+    #     tn.add(h)
+
+    # for h in tn.get_all(sorted=True):
+    #     print(h.posterior_score, h)
 
 if __name__ == "__main__":
     args = parse_args()
     if not os.path.exists(args.out):
         os.makedirs(args.out)
 
+    # Load data, get possible contexts, create grammar
     data = data_handling.load(args.data_dir)
+    contexts = data_handling.get_contexts(args.data_dir, args.n_colors_context)
+    grammar = grammars.create_grammar(args.g_type)    
     out = args.out
-    grammar = grammars.create_grammar(args.g_type)
-    h = hypotheses.create_hypothesis(args.h_type, grammar, args.data_dir, args.n_colors_context)
 
     # Run the main algorithm to do inference
-    infer(data, out, h, grammar)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, contexts)
+    infer(data, out, h0, grammar)
 
     
