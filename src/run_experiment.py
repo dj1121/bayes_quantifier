@@ -26,16 +26,16 @@ def parse_args():
     return args
 
 def infer(data, out, h0, grammar):
-    print(h0)
-    print(h0.compute_prior())
+    # print(h0)
+    # print(h0.compute_prior())
     # print(h0.compute_likelihood(data))
 
-    # tn = TopN(N=10) # store the top N
-    # for h in MetropolisHastingsSampler(h0, data, steps=1000):
-    #     tn.add(h)
+    tn = TopN(N=10) # store the top N
+    for h in MetropolisHastingsSampler(h0, data, steps=5000):
+        tn.add(h)
 
-    # for h in tn.get_all(sorted=True):
-    #     print(h.posterior_score, h)
+    for h in tn.get_all(sorted=True):
+        print(h, h.posterior_score)
 
 if __name__ == "__main__":
     args = parse_args()
@@ -44,12 +44,12 @@ if __name__ == "__main__":
 
     # Load data, get possible contexts, create grammar
     data = data_handling.load(args.data_dir)
-    contexts = data_handling.get_contexts(args.data_dir, args.n_colors_context)
+    # contexts = data_handling.get_contexts(args.data_dir, args.n_colors_context)
     grammar = grammars.create_grammar(args.g_type)    
     out = args.out
 
     # Run the main algorithm to do inference
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar, contexts)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar)
     infer(data, out, h0, grammar)
 
     

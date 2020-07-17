@@ -20,24 +20,28 @@ class HypothesisA(LOTHypothesis):
         except ZeroDivisionError:
             return float("nan")
 
-    # TODO: Fix to include w_t and w_not_t
     def compute_single_likelihood(self, datum):
-        w_mi = self.weight(self.contexts)
-        return (datum.alpha * w_mi) + ((1-datum.alpha) * w_mi)
+        if self(*datum.input) == datum.output:
+            return log((1.0-datum.alpha)/100. + datum.alpha)
+        else:
+            return log((1.0-datum.alpha)/100.)
+            
+        # w_mi = self.weight(self.contexts)
+        # return (datum.alpha * w_mi) + ((1-datum.alpha) * w_mi)
 
-    # weight of m_i (hypothesis) 
-    def weight(self, contexts):
-        # Get probability of hypothesis m_i being true in any context
-        n_true = 0
-        for datum in contexts:
-            if self(*datum.input): # Evaluate hypothesis on this context
-                n_true += 1
-        p_true = n_true/len(contexts)
-        return 1/(0.1 + p_true)
+    # # weight of m_i (hypothesis) 
+    # def weight(self, contexts):
+    #     # Get probability of hypothesis m_i being true in any context
+    #     n_true = 0
+    #     for datum in contexts:
+    #         if self(*datum.input): # Evaluate hypothesis on this context
+    #             n_true += 1
+    #     p_true = n_true/len(contexts)
+    #     return 1/(0.1 + p_true)
 
 
-def create_hypothesis(h_type, grammar, contexts):
+def create_hypothesis(h_type, grammar):
     if h_type == "A":
-        return HypothesisA(grammar=grammar, contexts=contexts)
+        return HypothesisA(grammar=grammar)
     else:
         raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')
