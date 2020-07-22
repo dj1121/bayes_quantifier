@@ -11,6 +11,9 @@ import os
 import data_handling
 import grammars
 import hypotheses
+import time
+from matplotlib import pyplot as plt
+from matplotlib import style
 from collections import Counter
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
@@ -25,26 +28,46 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def infer(data, out, h0, grammar):
-    # print(h0)
-    # print(h0.compute_prior())
-    # print(h0.compute_likelihood(data))
-
     tn = TopN(N=10) # store the top N
-    for h in MetropolisHastingsSampler(h0, data, steps=5000):
-        tn.add(h)
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    with open(out + timestr + ".txt", 'w', encoding='utf-8') as f:
+        for h in MetropolisHastingsSampler(h0, data, steps=5000):
+            tn.add(h)
+            f.write(str(h) + "|" + str(h.compute_posterior(data)) + "\n")
 
-    for h in tn.get_all(sorted=True):
-        print(h, h.posterior_score)
+        f.write("## Top N:\n")
+        for h in tn.get_all(sorted=True):
+            f.write("## " + str(h) + " " + str(h.posterior_score) + "\n")
+        f.close()
+
+    # Make learning curve
+    with open(out + timestr + ".txt", 'r', encoding='utf-8') as f:     
+        steps = []
+        posteriors = []
+        
+        i = 0
+        for line in f:
+            if "#" not in line:
+                l = line.split("|")
+                steps.append(int(i))
+                posteriors.append(float(l[1]))
+                i += 1
+        plt.xlabel('Steps', fontsize=18)
+        plt.ylabel('Posterior Score', fontsize=16)
+        plt.title("Concept Learning Curve (5000 steps)")
+        plt.plot(steps,posteriors)
+        plt.show()
+
 
 if __name__ == "__main__":
     args = parse_args()
     if not os.path.exists(args.out):
         os.makedirs(args.out)
 
-    # Load data, get possible contexts, create grammar
+    # Load data, craeate grammar
     data = data_handling.load(args.data_dir)
-    # contexts = data_handling.get_contexts(args.data_dir, args.n_colors_context)
     grammar = grammars.create_grammar(args.g_type)    
     out = args.out
 

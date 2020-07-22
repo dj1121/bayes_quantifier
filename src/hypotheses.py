@@ -21,24 +21,7 @@ class HypothesisA(LOTHypothesis):
             return float("nan")
 
     def compute_single_likelihood(self, datum):
-        if self(*datum.input) == datum.output:
-            return log((1.0-datum.alpha)/100. + datum.alpha)
-        else:
-            return log((1.0-datum.alpha)/100.)
-            
-        # w_mi = self.weight(self.contexts)
-        # return (datum.alpha * w_mi) + ((1-datum.alpha) * w_mi)
-
-    # # weight of m_i (hypothesis) 
-    # def weight(self, contexts):
-    #     # Get probability of hypothesis m_i being true in any context
-    #     n_true = 0
-    #     for datum in contexts:
-    #         if self(*datum.input): # Evaluate hypothesis on this context
-    #             n_true += 1
-    #     p_true = n_true/len(contexts)
-    #     return 1/(0.1 + p_true)
-
+        return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
 
 def create_hypothesis(h_type, grammar):
     if h_type == "A":
