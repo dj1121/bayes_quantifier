@@ -15,6 +15,9 @@ from multiset import *
 import pandas as pd
 
 
+"""
+Load human data from experiments
+"""
 def load(data_dir):
 
     data = [] # A list of FunctionData objects (what LOTlib uses)
@@ -50,63 +53,26 @@ def load(data_dir):
     return data
 
 """
-Enumerate all contexts of objects. Used to get weights of possible
-quantifier meaning.
-
-- n_colors: Number of different colors allowed in a context
-
+Plots a learning curve from human data and model data
 """
-def get_contexts(data_dir, n_colors_context):
-
-    objs = set()
-    colors = set()
-    color_to_int = {"red": 0, "blue": 1, "green": 2, "yellow": 3}
-
+def plot_learn_curve(data_dir, model_out):
+    print(data_dir)
     # Load all experiments in data directory
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
-        df = pd.read_csv(open(path, 'r'))
+        df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
-        # Get number of objects by searching for "obj" in column names
-        for column_name in df.columns:
-            if "obj" in column_name:
-                objs.add(column_name)
-        
-        # Get number of colors by searching unique names in "target" col
-        df = df.target.dropna()
-        for color in df.unique():
-            colors.add(color_to_int[color])
+        # Get relevant columns (objs and labels)
+        df = df['key_resp_monotonicity.corr'].dropna()
+
+        print(df)
 
 
-    # Generate possible contexts
-    contexts = []
+    # Human performance
 
-    # Get possible combos of colors possible in any context
-    colors = list(colors)
-    color_combos = ""
-    for key in color_to_int:
-        color_combos += str(color_to_int[key])
-    color_combos = list(combinations(color_combos, n_colors_context))
-    
-    # Generate all possible contexts given color combo i, add those to total list
-    for i in color_combos:
-        i = "".join(list(i))
-        c = list(combinations_with_replacement(i, len(objs)))
-        contexts += c
+    # Model performance (using model_out)
 
-    # Remove duplicates and convert each context to a multiset then to FunctionData
-    contexts = list(set(contexts))
-    for i in range(0, len(contexts)):
-        contexts[i] = list(contexts[i])
-        set_a = Multiset()
-        set_b = Multiset()
-        for item in contexts[i]:
-            if len(set_a) == 0 and len(set_b) == 0:
-                set_a.add(item)
-            elif item not in set_a:
-                set_b.add(item)
-            else:
-                set_a.add(item)
-        contexts[i] = FunctionData(input=[set_a, set_b], output=None)
+    # Plot
+    print()
 
-    return contexts
+plot_learn_curve("../data/monotone/", "none")

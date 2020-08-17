@@ -17,6 +17,9 @@ from matplotlib import style
 from collections import Counter
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
+
+TIME = time.strftime("%Y%m%d-%H%M%S")
+MODEL_OUT = None
     
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -31,34 +34,17 @@ def parse_args():
 
 def infer(data, out, h0, grammar, sample_steps):
     tn = TopN(N=10) # store the top N
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    with open(out + timestr + ".txt", 'w', encoding='utf-8') as f:
+    
+    MODEL_OUT = out + TIME + ".txt"
+    with open(MODEL_OUT, 'w', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             tn.add(h)
             f.write(str(h) + "|" + str(h.compute_posterior(data)) + "\n")
 
         f.write("## Top N:\n")
         for h in tn.get_all(sorted=True):
-            f.write("## " + str(h) + " " + str(h.posterior_score) + "\n")
+            f.write("## " + str(h) + "|" + str(h.posterior_score) + "\n")
         f.close()
-
-    # Make learning curve
-    with open(out + timestr + ".txt", 'r', encoding='utf-8') as f:     
-        steps = []
-        posteriors = []
-        
-        i = 0
-        for line in f:
-            if "#" not in line:
-                l = line.split("|")
-                steps.append(int(i))
-                posteriors.append(float(l[1]))
-                i += 1
-        plt.xlabel('Steps', fontsize=18)
-        plt.ylabel('Posterior Score', fontsize=16)
-        plt.title("Concept Learning Curve (5000 steps)")
-        plt.plot(steps,posteriors)
-        plt.show()
 
 
 if __name__ == "__main__":
@@ -72,9 +58,9 @@ if __name__ == "__main__":
     sample_steps = args.sample_steps  
     out = args.out
     
-
     # Run the main algorithm to do inference
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
     infer(data, out, h0, grammar, sample_steps)
 
-    
+    # Plot outputs
+    data_handling.plot_learn_curve(args.data_dir, MODEL_OUT)
