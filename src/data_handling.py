@@ -6,13 +6,13 @@
 # -----------------------------------------------------------
 
 from LOTlib3.DataAndObjects import FunctionData
-from LOTlib3.DataAndObjects import Obj
-from itertools import combinations_with_replacement
-from itertools import combinations
 import os
+import numpy as np
 from collections import Counter
 from multiset import *
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 """
@@ -56,23 +56,44 @@ def load(data_dir):
 Plots a learning curve from human data and model data
 """
 def plot_learn_curve(data_dir, model_out):
-    print(data_dir)
-    # Load all experiments in data directory
+    
+    # Ten human participants, 96 accuracy points on each
+    human_accuracies = []
+
+    # Load all experiment data in data directory (each participant)
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
         df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
-        # Get relevant columns (objs and labels)
-        df = df['key_resp_monotonicity.corr'].dropna()
+        # Get answer column for this participant (objs and labels)
+        series = df['key_resp_monotonicity.corr'].dropna()
 
-        print(df)
+        # Participant performance (get accuracy at each step)
+        accuracies = []
+        for i in range(1, len(series) + 1):
+            corr_so_far = series[0:i].value_counts()
+            acc = 0
+            if 1.0 in corr_so_far.keys() and 0.0 in corr_so_far.keys():
+                acc = corr_so_far[1.0] / (corr_so_far[1.0] + corr_so_far[0.0])
+            elif corr_so_far.keys()[0] == 1.0:
+                acc = 1
+            accuracies.append(acc)
+
+        human_accuracies.append(accuracies)
+    
+    # Get average of human accuracies at each step
+    human_accuracies = np.array(human_accuracies)
+    avg_accuracies = np.average(human_accuracies, axis=0)
+    
+    output = pd.Series(avg_accuracies)
+    sns.set(style="darkgrid")
+    sns.relplot(kind="line", data=output)
+    plt.xlabel("# Contexts Seen")
+    plt.xticks(np.arange(0, 100, 12))
+    plt.ylabel("Avg. Human Accuracy")
+    plt.title("Human Learning Curve: Monotone Quantifier")
+    plt.show()
 
 
-    # Human performance
-
-    # Model performance (using model_out)
-
-    # Plot
-    print()
 
 plot_learn_curve("../data/monotone/", "none")
