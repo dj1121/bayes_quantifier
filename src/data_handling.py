@@ -53,9 +53,9 @@ def load(data_dir):
     return data
 
 """
-Plots a learning curve from human data and model data
+Plots learning curves from human data and model data
 """
-def plot_learn_curve(data_dir, model_out):
+def plot_learn_curves(data_dir, model_out):
     
     # Ten human participants, 96 accuracy points on each
     human_accuracies = []
@@ -81,19 +81,41 @@ def plot_learn_curve(data_dir, model_out):
 
         human_accuracies.append(accuracies)
     
-    # Get average of human accuracies at each step
+
+
+    ########################
+    # HUMAN LEARNING CURVE #
+    ########################
     human_accuracies = np.array(human_accuracies)
-    avg_accuracies = np.average(human_accuracies, axis=0)
-    
-    output = pd.Series(avg_accuracies)
+    avg_accuracies = pd.Series(np.average(human_accuracies, axis=0))
+    sd_accuracies = pd.Series(np.std(human_accuracies, axis=0))
+
+    # Seaborn
     sns.set(style="darkgrid")
-    sns.relplot(kind="line", data=output)
+    plt.fill_between(x=np.arange(len(avg_accuracies)),
+                 y1=avg_accuracies - sd_accuracies,
+                 y2=avg_accuracies + sd_accuracies,
+                 alpha=0.25
+                 )
+    plt.plot(np.arange(len(avg_accuracies)), avg_accuracies)
+
+    # Labels
     plt.xlabel("# Contexts Seen")
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Avg. Human Accuracy")
-    plt.title("Human Learning Curve: Monotone Quantifier")
-    plt.show()
+    plt.title("Human Learning Curve: \n Monotone Quantifier")
+    # plt.show()
+    # plt.savefig(model_out + 'human_plot.png')
 
 
+    ########################
+    # MODEL LEARNING CURVE #
+    ########################
 
-plot_learn_curve("../data/monotone/", "none")
+
+    ################################
+    # HUMAN + MODEL LEARNING CURVE #
+    ################################
+
+
+plot_learn_curves("../data/monotone/", "none")

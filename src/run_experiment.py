@@ -63,4 +63,4 @@ if __name__ == "__main__":
     infer(data, out, h0, grammar, sample_steps)
 
     # Plot outputs
-    data_handling.plot_learn_curve(args.data_dir, MODEL_OUT)
+    data_handling.plot_learn_curves(args.data_dir, MODEL_OUT)
