@@ -60,7 +60,7 @@ if __name__ == "__main__":
     
     # Run the main algorithm to do inference of n steps over each amount of data seen
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    data = data[0:12] # TODO: Just use first human's data as training?
+    data = data[0:96] # TODO: Just use first human's data as training?
     for i in range(len(data)):
         print("chunk ", i)
         chunk_data = data[0:i+1]
