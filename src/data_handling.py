@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 
 """
-Load human data from experiments
+Load training data for the model (contexts -> labels)
 """
 def load(data_dir):
 
@@ -53,10 +53,17 @@ def load(data_dir):
     return data
 
 """
-Plots learning curves from human data and model data
+Plots learning curves from human data and model data. 
+**Uses data from pre-written output files or from CSV files from human experiments**
 """
-def plot_learn_curves(data_dir, model_out):
-    
+def plot_learn_curves(data_dir, out):
+
+    ########################
+    # HUMAN LEARNING CURVE #
+    ########################
+
+    plt.figure(0)
+
     # Ten human participants, 96 accuracy points on each
     human_accuracies = []
 
@@ -80,12 +87,8 @@ def plot_learn_curves(data_dir, model_out):
             accuracies.append(acc)
 
         human_accuracies.append(accuracies)
-    
 
 
-    ########################
-    # HUMAN LEARNING CURVE #
-    ########################
     human_accuracies = np.array(human_accuracies)
     avg_accuracies = pd.Series(np.average(human_accuracies, axis=0))
     sd_accuracies = pd.Series(np.std(human_accuracies, axis=0))
@@ -103,14 +106,35 @@ def plot_learn_curves(data_dir, model_out):
     plt.xlabel("# Contexts Seen")
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Avg. Human Accuracy")
-    plt.title("Human Learning Curve: \n Monotone Quantifier")
+    plt.title("Human Learning Curve: \n" + out)
     # plt.show()
-    # plt.savefig(model_out + 'human_plot.png')
+    plt.savefig(out + '_human_plot.png')
 
 
-    ########################
-    # MODEL LEARNING CURVE #
-    ########################
+    #########################################################
+    # MODEL LEARNING CURVE (top concept at each # data seen)#
+    #########################################################
+
+    plt.figure(1)
+
+    df = pd.read_csv(out + ".csv", sep='|')
+    concepts = df['concept']
+    model_probs = df['post_prob']
+
+    # Seaborn
+    sns.set(style="darkgrid")
+    plt.plot(np.arange(len(model_probs)), model_probs)
+
+    # Labels
+    plt.xlabel("# Contexts Seen")
+    plt.xticks(np.arange(0, 100, 12))
+    plt.ylabel("Posterior Probability (Log)")
+    plt.title("Top Posterior Score per Data Seen \n" + out)
+    # Print the concept out for every 12th concept
+    for i in range(0, len(model_probs), 11):
+        plt.annotate(concepts[i], (i, model_probs[i]))
+    # plt.show()
+    plt.savefig(out + '_model_prob.png')
 
 
     ################################
@@ -118,4 +142,4 @@ def plot_learn_curves(data_dir, model_out):
     ################################
 
 
-plot_learn_curves("../data/monotone/", "none")
+# plot_learn_curves("../data/monotone/", "none")

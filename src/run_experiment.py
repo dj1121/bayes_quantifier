@@ -19,12 +19,11 @@ from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
 
 TIME = time.strftime("%Y%m%d-%H%M%S")
-MODEL_OUT = None
     
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../data/monotone/")
-    parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../out/")
+    parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../model_out/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
@@ -33,17 +32,13 @@ def parse_args():
 
 
 def infer(data, out, h0, grammar, sample_steps):
-    tn = TopN(N=10) # store the top N
+    tn = TopN(N=1) # store the top N
     
-    MODEL_OUT = out + TIME + ".txt"
-    with open(MODEL_OUT, 'w', encoding='utf-8') as f:
+    with open(out + ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             tn.add(h)
-            f.write(str(h) + "|" + str(h.compute_posterior(data)) + "\n")
-
-        f.write("## Top N:\n")
         for h in tn.get_all(sorted=True):
-            f.write("## " + str(h) + "|" + str(h.posterior_score) + "\n")
+            f.write(str(h) + "|" + str(h.posterior_score) + "\n")
         f.close()
 
 
@@ -52,15 +47,24 @@ if __name__ == "__main__":
     if not os.path.exists(args.out):
         os.makedirs(args.out)
 
-    # Load data, craeate grammar
+    # Load data, create grammar
     data = data_handling.load(args.data_dir)
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps  
-    out = args.out
+    out = args.out + TIME
+
+    # Create heading of model_output CSV
+    with open(out + ".csv", 'a', encoding='utf-8') as f:
+        f.write("concept|post_prob\n")
     
-    # Run the main algorithm to do inference
+    
+    # Run the main algorithm to do inference of n steps over each amount of data seen
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    infer(data, out, h0, grammar, sample_steps)
+    data = data[0:12] # TODO: Just use first human's data as training?
+    for i in range(len(data)):
+        print("chunk ", i)
+        chunk_data = data[0:i+1]
+        infer(chunk_data, out, h0, grammar, sample_steps)
 
     # Plot outputs
-    data_handling.plot_learn_curves(args.data_dir, MODEL_OUT)
+    data_handling.plot_learn_curves(args.data_dir, out)
