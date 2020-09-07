@@ -12,6 +12,7 @@ import data_handling
 import grammars
 import hypotheses
 import time
+from math import log
 from matplotlib import pyplot as plt
 from matplotlib import style
 from collections import Counter
@@ -34,11 +35,24 @@ def parse_args():
 def infer(data, out, h0, grammar, sample_steps):
     tn = TopN(N=1) # store the top N
     
-    with open(out + ".csv", 'a', encoding='utf-8') as f:
+    # Record concept with top probability
+    with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             tn.add(h)
         for h in tn.get_all(sorted=True):
             f.write(str(h) + "|" + str(h.posterior_score) + "\n")
+        f.close()
+    
+    # Record accuracy over concepts seen (given top prob)
+    with open(out + "_acc.csv", 'a', encoding='utf-8') as f:
+        num_correct = 0
+        total = len(data)
+        for h in tn.get_all(sorted=True):
+            # Calculate accuracy over concept over all data currently seen
+            for datum in data:
+                if h.compute_single_likelihood(datum) == log(datum.alpha):
+                    num_correct += 1
+            f.write(str(h) + "|" + str(float(num_correct/total)) + "\n")
         f.close()
 
 
@@ -53,14 +67,15 @@ if __name__ == "__main__":
     sample_steps = args.sample_steps  
     out = args.out + TIME
 
-    # Create heading of model_output CSV
-    with open(out + ".csv", 'a', encoding='utf-8') as f:
+    # Create headings of output CSV
+    with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
         f.write("concept|post_prob\n")
-    
+    with open(out + "_acc.csv", 'a', encoding='utf-8') as f:
+        f.write("concept|acc\n")
     
     # Run the main algorithm to do inference of n steps over each amount of data seen
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    data = data[0:96] # TODO: Just use first human's data as training?
+    data = data[0:2] # TODO: Just use first human's data as training?
     for i in range(len(data)):
         print("chunk ", i)
         chunk_data = data[0:i+1]
