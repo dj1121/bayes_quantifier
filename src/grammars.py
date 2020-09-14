@@ -1,5 +1,5 @@
 # -----------------------------------------------------------
-# Define some grammars and functions to deal with them
+# Allows definition of grammars and provides functions to deal with them
 #
 # 2020 Devin Johnson, University of Washington Linguistics
 # Email: dj1121@uw.edu
@@ -9,6 +9,19 @@ from LOTlib3.Grammar import Grammar
 
 
 def create_grammar(g_type):
+
+    """
+    Creates a grammar of a specified type and allows definition of grammar rules with their
+    probabilities.
+
+    Parameters:
+        - g_type (str): Grammar type specified on command line. If you wish to create a new
+        grammar type, add a new type in the "if" clause and define it below.
+
+    Returns:
+    - grammar (LOTLib3.Grammar): Grammar of specified type
+    - None: If the specified grammar type does not exist (you must create).
+    """
 
     if g_type == "quant":
         grammar = Grammar(start='BOOL')

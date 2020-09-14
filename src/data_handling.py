@@ -5,32 +5,51 @@
 # Email: dj1121@uw.edu
 # -----------------------------------------------------------
 
-from LOTlib3.DataAndObjects import FunctionData
+# Python Imports
 import os
+
+# Analysis Tools
 import numpy as np
-from collections import Counter
 from multiset import *
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# LOTLib3
+from LOTlib3.DataAndObjects import FunctionData
 
-"""
-Load training data for the model (contexts -> labels)
-"""
-def load(data_dir):
+def load(data_dir, alpha):
+    """
+    Loads and returns training data for the model (contexts -> labels).
+    Data is stored as a list of FunctionData objects. Each FunctionData object
+    represents a datum (one piece of data) with an input which is a list of two
+    multisets of colored objects, and an output which is true or false denoting 
+    if the input represents the current concept being learned.
 
-    data = [] # A list of FunctionData objects (what LOTlib uses)
+    NOTE: This loading method gives a certain structure to data (i.e. two multisets). If such a structure is not desired as input,
+    then another function ought to be created and thus another type of hypothesis (which works over another data input type)
+    in hypotheses.py.
+
+    Parameters:
+        - data_dir (str): Path to where data is stored. By default, there are multiple CSV files for one experiment type (representing each human). 
+        - alpha (float): Assumed noisiness of data being loaded (i.e. incorrect labels, etc.)
+
+        TODO: What data are we using? Just the first human?
+
+    Returns:
+        - data (list): A list of FunctionData objects, LOTLib's specific data type for input/output pairs.
+    """
+
+    data = []
     colors = {"red": 0, "blue": 1, "green": 2, "yellow": 3}
 
-    # Load all experiments in data directory
+    # Load all data files in experiment directory
     for f_name in os.listdir(data_dir):
         path = data_dir + f_name
         df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
-        # Get relevant columns (objs and labels)
-        df = df.loc[:, 'obj1':'corrAns'].dropna()
         # Iterate over rows and columns, create FunctionData objects
+        df = df.loc[:, 'obj1':'corrAns'].dropna()
         for index, row in df.iterrows():
             obj_sets = {}
             label = None
@@ -45,18 +64,29 @@ def load(data_dir):
                     # If "corrAns" column is c, output = true, else = false
                     label = (row[col] == "c")
 
-            if len(obj_sets) == 1: # All items are same color, make an empty set as the second argument
-                data.append(FunctionData(input=[obj_sets[key] for key in obj_sets] + [Multiset()], output=label, alpha=0.99))
+            if len(obj_sets) == 1: # If all items are same color, make an empty multiset as the second argument
+                data.append(FunctionData(input=[obj_sets[key] for key in obj_sets] + [Multiset()], output=label, alpha=alpha))
             else:
-                data.append(FunctionData(input=[obj_sets[key] for key in obj_sets], output=label, alpha=0.99))
+                data.append(FunctionData(input=[obj_sets[key] for key in obj_sets], output=label, alpha=alpha))
 
     return data
 
-"""
-Plots learning curves from human data and model data. 
-**Uses data from pre-written output files or from CSV files from human experiments**
-"""
 def plot_learn_curves(data_dir, out):
+    """
+    Plots learning curves:
+        - Human Learning Curve: A plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
+        - Model Learning Curve: A the concepts with (log) top posterior probability at each amount of data seen.
+        - Human/Model Learninr Curve: A plot of average human accuracy AND (non-average) model accuracy over each amount of data seen.
+
+    To make more plots, add code below and preface it with plt.figure(n) to start a new plot.
+
+    Parameters:
+        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
+        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+
+    Returns:
+        - None
+    """
 
     ########################
     # HUMAN LEARNING CURVE #
