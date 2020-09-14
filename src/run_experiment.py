@@ -35,12 +35,12 @@ def parse_args():
         - args (argparse.Namespace): The list of arguments passed in
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../data/monotone/")
+    parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../sample_data/monotone/")
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../model_out/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
-    parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data", default=0.99)
+    parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     args = parser.parse_args()
     return args
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     
     # Run the main algorithm to do inference over each amount of data seen (1 context, 2,...96)
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    data = data[0:2] # TODO: Just use first human's data as training?
+    data = data[0:2] # TODO: Just use first human's data as training? Change in the dataloading part once figured out
     for i in range(len(data)):
         print("Data chunk: ", i)
         data_chunk = data[0:i+1]
