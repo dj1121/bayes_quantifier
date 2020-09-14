@@ -21,7 +21,7 @@ To test out the program for yourself on some sample data with default parameters
 
 To run a custom experiment, the program can be specified on the command line as follows (from inside the src folder):
 
-`python run_experiment.py [data_dir] [out] [g_type] [h_type] [sample_steps] [alpha]`
+`python run_experiment.py -data_dir -out -g_type -h_type -sample_steps -alpha`
 
 The parameters serve the following functions:
 
