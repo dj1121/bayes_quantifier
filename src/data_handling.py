@@ -161,7 +161,3 @@ def plot_learn_curves(data_dir, out):
 
     # plt.show()
     plt.savefig(out + '_acc.png', dpi=200)
-
-
-
-# plot_learn_curves("../data/monotone/", "none")

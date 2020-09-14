@@ -3,3 +3,4 @@ LOTlib3/
 __pycache__/
 /out/
 .vscode
+model_out/
