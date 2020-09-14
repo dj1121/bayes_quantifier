@@ -7,7 +7,7 @@ This repository contains code for experiments in the following paper:
 
 - [Python 3+](https://www.python.org/downloads/)
 - [multiset](https://pypi.org/project/multiset/)
-- [LOTLib3](https://github.com/piantado/LOTlib3)
+- [LOTLib3](https://github.com/piantado/LOTlib3) (IMPORTANT: Either specify a path to your LOTLib3 folder or place it in the src folder)
 - [Numpy](https://numpy.org/)
 - [Pandas](https://pandas.pydata.org/)
 - [Seaborn](https://seaborn.pydata.org/)
