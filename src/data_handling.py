@@ -76,7 +76,7 @@ def plot_learn_curves(data_dir, out):
     Plots learning curves:
         - Human Learning Curve: A plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
         - Model Learning Curve: A the concepts with (log) top posterior probability at each amount of data seen.
-        - Human/Model Learninr Curve: A plot of average human accuracy AND (non-average) model accuracy over each amount of data seen.
+        - Human/Model Learninr Curve: A plot of average human accuracy AND this (non-average) model's accuracy over each amount of data seen.
 
     To make more plots, add code below and preface it with plt.figure(n) to start a new plot.
 
@@ -136,7 +136,7 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen")
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Avg. Human Accuracy")
-    plt.title("Human Learning Curve: \n" + out)
+    plt.title("Human Learning Curve")
     # plt.show()
     plt.savefig(out + '_human_plot.png', dpi=200)
 
@@ -159,7 +159,7 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen")
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Posterior Probability (Log)")
-    plt.title("Best Posterior Score per Data Seen \n" + out)
+    plt.title("Best Posterior Score per Data Seen")
     # Print the concept out for every 12th concept
     style = dict(size=7, color='gray')
     for i in range(0, len(model_probs), 11):
@@ -186,7 +186,7 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen")
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Accuracy")
-    plt.title("Human and Model Accuracy Over Data Seen \n" + out)
+    plt.title("Human and Model Accuracy Over Data Seen")
     plt.legend(['Average Human Accuracy', 'Model Accuracy'])
 
     # plt.show()
