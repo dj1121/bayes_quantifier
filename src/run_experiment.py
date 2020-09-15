@@ -97,9 +97,9 @@ if __name__ == "__main__":
 
     # Create headings of output CSV
     with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
-        f.write("concept|post_prob\n")
+        f.write("hypothesis|post_prob\n")
     with open(out + "_acc.csv", 'a', encoding='utf-8') as f:
-        f.write("concept|acc\n")
+        f.write("hypothesis|acc\n")
     
     # Run the main algorithm to do inference over each amount of data seen (1 context, 2,...96)
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)

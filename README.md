@@ -105,7 +105,7 @@ Output files are named according to the date, time, and result type. For example
 Files ending in `_acc` store the accuracy results of the learning model. Each line shows the top hypothesis (most probable) per amount of data seen (line 1 = one data point, line 30 = thirty data points, etc.) and the accuracy of running that hypothesis over all the data currently seen. Some example lines:
 
 ```
-concept|acc
+hypothesis|acc
 lambda A, B: issubset_(B, A)|1.0
 lambda A, B: issubset_(A, A)|1.0
 ```
@@ -118,7 +118,7 @@ This means that after seeing one data point (first line), the model guesses that
 Files ending in `_prob` store the (log) posterior probabilities of the learning model. Each line also shows the top hypothesis (most probable) per amount of data seen and its posterior probability. Example lines:
 
 ```
-concept|post_prob
+hypothesis|post_prob
 lambda A, B: issuper_(A, B)|-3.7128326951364294
 lambda A, B: equal_(B, B)|-3.7228830309899306
 ```
