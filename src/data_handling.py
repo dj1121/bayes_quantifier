@@ -75,8 +75,8 @@ def plot_learn_curves(data_dir, out):
     """
     Plots learning curves:
         - Human Learning Curve: A plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
-        - Model Learning Curve: A the concepts with (log) top posterior probability at each amount of data seen.
-        - Human/Model Learninr Curve: A plot of average human accuracy AND this (non-average) model's accuracy over each amount of data seen.
+        - Model Learning Curve: A plot of the concepts with (log) top posterior probability at each amount of data seen.
+        - Human/Model Learning Curve: A plot of average human accuracy AND this (non-average) model's accuracy over each amount of data seen.
 
     To make more plots, add code below and preface it with plt.figure(n) to start a new plot.
 
