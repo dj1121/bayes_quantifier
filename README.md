@@ -120,7 +120,7 @@ if g_type == "quant":
 This grammar assumes hypotheses will be defined over two sets and applies uniform probability weight to all productions. Creating new grammars allows for easy experimentation over possible priors. For more information on grammars, refer to [LOTLib3 documentation](https://github.com/piantado/LOTlib3/blob/master/Documentation/Tutorial.md)
 
 ## Analyzing Results
-By default, this program outputs two .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that the humans see. Output files are stored by default in model_out, a folder which is created in the main directory of the program.
+By default, this program outputs two .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that the humans see. Output files are stored by default in results, a folder which is created in the main directory of the program.
 
 Output files are named according to the date, time, and result type. For example, if a monotone quantifier learning experiment was run on September 14th, 2020 at 10:53:14 and the results sorted in the file are accuracies, the name would be:
 
@@ -151,7 +151,7 @@ lambda A, B: equal_(B, B)|-3.7228830309899306
 Naturally, we would expect these (log) probabilities to decrease over time as we converge to better hypotheses by having seen more data points.
 
 ### Learning Curves
-In the model_out folder, by default for each experiment, one can also find the following learning curves:
+In the results folder, by default for each experiment, one can also find the following learning curves:
 - <b>Human Learning Curve:</b> A plot of average human accuracy over # contexts seen with an error band of one standard deviation.
 
 - <b>Model Learning Curve:</b> A plot of the concepts with (log) top posterior probability at each amount of data seen.

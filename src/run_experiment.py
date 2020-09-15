@@ -37,7 +37,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("exp_type", type=str, help="Experiment type (e.g. monotone, non_convex, or non_monotone)", default="monotone") # Required
     parser.add_argument("-data_dir",type=str, help = "Path to data", default ="./../sample_data/")
-    parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../model_out/")
+    parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     
     # Run the main algorithm to do inference over each amount of data seen (1 context, 2,...96)
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    data = data[0:2] # TODO: Just use first human's data as training? Change in the dataloading part once figured out
+    data = data[0:96] # TODO: Just use first human's data as training? Change in the dataloading part once figured out
     for i in range(len(data)):
         print("Data chunk: ", i)
         data_chunk = data[0:i+1]
