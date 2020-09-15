@@ -71,7 +71,7 @@ def load(data_dir, alpha):
 
     return data
 
-def plot_learn_curves(data_dir, out):
+def plot_learn_curves(data_dir, out, exp_type):
     """
     Plots learning curves:
         - Human Learning Curve: A plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
@@ -83,11 +83,11 @@ def plot_learn_curves(data_dir, out):
     Parameters:
         - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
         - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
 
     Returns:
         - None
     """
-
     ########################
     # HUMAN LEARNING CURVE #
     ########################
@@ -136,7 +136,7 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Avg. Human Accuracy", fontsize=12)
-    plt.title("Human Learning Curve")
+    plt.title("Human Learning Curve \n(" + exp_type + ")")
     # plt.show()
     plt.savefig(out + '_human_plot.png', dpi=200)
 
@@ -148,7 +148,7 @@ def plot_learn_curves(data_dir, out):
     plt.figure(1)
 
     df = pd.read_csv(out + "_prob.csv", sep='|')
-    concepts = df['concept']
+    hypotheses = df['hypothesis']
     model_probs = df['post_prob']
 
     # Seaborn
@@ -159,11 +159,11 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Posterior Probability (Log)", fontsize=12)
-    plt.title("Best Posterior Score per Data Seen")
+    plt.title("Best Posterior Score Per Data Seen \n(" + exp_type + ")")
     # Print the concept out for every 12th concept
     style = dict(size=7, color='gray')
     for i in range(0, len(model_probs), 11):
-        plt.text(i, model_probs[i], concepts[i], **style)
+        plt.text(i, model_probs[i], hypotheses[i], **style)
     # plt.show()
     plt.savefig(out + '_prob.png', dpi=200)
 
@@ -174,7 +174,7 @@ def plot_learn_curves(data_dir, out):
     plt.figure(2)
 
     df = pd.read_csv(out + "_acc.csv", sep='|')
-    concepts = df['concept']
+    hypotheses = df['hypothesis']
     model_acc = df['acc']
 
     # Seaborn
@@ -186,7 +186,7 @@ def plot_learn_curves(data_dir, out):
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Accuracy", fontsize=12)
-    plt.title("Human and Model Accuracy Over Data Seen")
+    plt.title("Human and Model Accuracy Over Data Seen \n(" + exp_type + ")")
     plt.legend(['Average Human Accuracy', 'Model Accuracy'])
 
     # plt.show()

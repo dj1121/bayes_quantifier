@@ -35,7 +35,8 @@ def parse_args():
         - args (argparse.Namespace): The list of arguments passed in
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir",type=str, help = "Path to data (monotone, non_convex, or non_monotone)", default ="./../sample_data/monotone/")
+    parser.add_argument("exp_type", type=str, help="Experiment type (e.g. monotone, non_convex, or non_monotone)", default="monotone") # Required
+    parser.add_argument("-data_dir",type=str, help = "Path to data", default ="./../sample_data/")
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../model_out/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
@@ -88,12 +89,14 @@ if __name__ == "__main__":
     args = parse_args()
     if not os.path.exists(args.out):
         os.makedirs(args.out)
+    data_path = args.data_dir + "/" + args.exp_type + "/"
+    out = args.out + TIME + "_" + args.exp_type
 
     # Load data, create grammar
-    data = data_handling.load(args.data_dir, args.alpha)
+    data = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps  
-    out = args.out + TIME
+    
 
     # Create headings of output CSV
     with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
@@ -110,4 +113,4 @@ if __name__ == "__main__":
         infer(data_chunk, out, h0, grammar, sample_steps)
 
     # Plot outputs
-    data_handling.plot_learn_curves(args.data_dir, out)
+    data_handling.plot_learn_curves(data_path, out, args.exp_type)
