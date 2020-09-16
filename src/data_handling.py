@@ -138,7 +138,7 @@ def plot_learn_curves(data_dir, out, exp_type):
     plt.ylabel("Avg. Human Accuracy", fontsize=12)
     plt.title("Human Learning Curve \n(" + exp_type + ")")
     # plt.show()
-    plt.savefig(out + '_human_plot.png', dpi=200)
+    plt.savefig(out + '_human_plot.png', dpi=400)
 
 
     #########################################################
@@ -153,7 +153,7 @@ def plot_learn_curves(data_dir, out, exp_type):
 
     # Seaborn
     sns.set(style="darkgrid")
-    plt.plot(np.arange(len(model_probs)), model_probs)
+    plt.plot(np.arange(len(model_probs)), model_probs, '.-')
 
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
@@ -165,7 +165,7 @@ def plot_learn_curves(data_dir, out, exp_type):
     for i in range(0, len(model_probs), 11):
         plt.text(i, model_probs[i], hypotheses[i], **style)
     # plt.show()
-    plt.savefig(out + '_prob.png', dpi=200)
+    plt.savefig(out + '_prob.png', dpi=400)
 
 
     ################################
@@ -190,4 +190,4 @@ def plot_learn_curves(data_dir, out, exp_type):
     plt.legend(['Average Human Accuracy', 'Model Accuracy'])
 
     # plt.show()
-    plt.savefig(out + '_acc.png', dpi=200)
+    plt.savefig(out + '_acc.png', dpi=400)
