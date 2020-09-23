@@ -45,7 +45,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def infer(data, out, h0, grammar, sample_steps):
+def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     """
     Using data, grammar, and a starting hypothesis, takes sample_steps number
     of samples over data and stores the best ranking hypothesis in TopN. In other
@@ -55,9 +55,11 @@ def infer(data, out, h0, grammar, sample_steps):
     Parameters:
         - data (list): A list of FunctionData objects, a data type of LOTLib specifying input/output pairs for training
         - out (str): A path to where output files will be stored (model accuracy, probabilities, etc.)
+        - exp_id (str): Identifier for this experiment run
         - h0 (LOTlib3.LOTHypothesis): A hypothesis randomly sampled from the grammar specified to serve as a starting hypothesis for inferencing
         - grammar (LOTlib3.Grammar): A PCFG grammar specifying the space of possible hypotheses
         - sample_steps (int): Number of samples to perform in inferencing over the given data
+        - model_num (int): What number model we are training (since data may be split per human)
 
     Returns:
         - None
@@ -67,7 +69,7 @@ def infer(data, out, h0, grammar, sample_steps):
     TN = TopN(N=1)
 
     # Record top N concept(s) with top posterior probability over this data/steps
-    with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
+    with open(args.out + exp_id + "/" + exp_id + "_prob_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             TN.add(h)
         for h in TN.get_all(sorted=True):
@@ -75,7 +77,7 @@ def infer(data, out, h0, grammar, sample_steps):
         f.close()
     
     # With best concept(s), record accuracy over all data provided
-    with open(out + "_acc.csv", 'a', encoding='utf-8') as f:
+    with open(args.out + exp_id + "/" + exp_id + "_acc_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         num_correct = 0
         total = len(data)
         for h in TN.get_all(sorted=True):
@@ -85,32 +87,81 @@ def infer(data, out, h0, grammar, sample_steps):
             f.write(str(h) + "|" + str(float(num_correct/total)) + "\n")
         f.close()
 
+def plot(data, out, exp_id, exp_type):
+    """
+    Plot results, edit as needed to include your own plots from data_handling.py.
+
+    Parameters:
+        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
+        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+        - exp_id (str): Identifier for this experiment run
+        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
+
+    Returns:
+        - None
+    """
+    data_handling.plt_h_acc(data, out, exp_id, exp_type)
+    data_handling.plt_hm_acc(data, out, exp_id, exp_type)
+    data_handling.plt_mprob(data, out, exp_id, exp_type)
+
+def train(data, h0, n_contexts, out, exp_id, sample_steps):
+    """
+    Train as many models as there are humans, each with n contexts (training data points). 
+    Each model is trained on same data as the corresponding human sees 
+    (i.e. human 1/model 1 sees datapoints 1-96, human 2/model 2 sees 97-192, etc.). Accuracy
+    and probability results stored during training in experiment results folder.
+
+    Parameters:
+        - data (list): A list of FunctionData objects, LOTLib's specific data type for input/output pairs.
+        - h0 (LOTlib3.LOTHypothesis): A hypothesis randomly sampled from the grammar specified to serve as a starting hypothesis for inferencing
+        - n_contexts (int): Number of contexts (data points) each human/model sees
+        - out (str): A path to where output files will be stored (model accuracy, probabilities, etc.)
+        - exp_id (str): Identifier for this experiment run
+        - sample_steps (int): Number of samples to perform in inferencing over the given data
+    
+    Returns:
+        - None
+    """
+    # Split data per n amount of contexts per human
+    # A separate model is trained on each set of data (as each human sees)
+    data_split = []
+    for i in range(0, len(data), n_contexts):
+        data_split.append(data[i:i+n_contexts])    
+
+    # Inference over of data seen so far by given model (mimicking humans seeing contexts in succession)
+    for i in range(0, len(data_split)):
+        # Create headings of output CSV
+        with open(out + exp_id + "/" + exp_id + "_prob_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
+            f.write("hypothesis|post_prob\n")
+        with open(out + exp_id + "/" + exp_id + "_acc_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
+            f.write("hypothesis|acc\n")
+
+        model_i_data = data_split[i]
+        print("Training Model:", i + 1, "of", len(data_split))
+        for j in range(len(model_i_data)):
+            data_chunk = model_i_data[0:j+1]
+            print("Model " + str(i + 1) + ", Data Seen:", j+1)
+            infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, model_num=i+1)
+
 if __name__ == "__main__":
+    
     args = parse_args()
-    if not os.path.exists(args.out):
+    
+    # Make results folder
+    if not os.path.exists(args.out): 
         os.makedirs(args.out)
     data_path = args.data_dir + "/" + args.exp_type + "/"
-    out = args.out + TIME + "_" + args.exp_type
-
+    exp_id = TIME + "_" + args.exp_type
+    os.mkdir(args.out + exp_id + "/")
+    
     # Load data, create grammar
-    data = data_handling.load(data_path, args.alpha)
+    data, n_contexts = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps  
-    
 
-    # Create headings of output CSV
-    with open(out + "_prob.csv", 'a', encoding='utf-8') as f:
-        f.write("hypothesis|post_prob\n")
-    with open(out + "_acc.csv", 'a', encoding='utf-8') as f:
-        f.write("hypothesis|acc\n")
-    
-    # Run the main algorithm to do inference over each amount of data seen (1 context, 2,...96)
+    # Select a starting hypothesis and train
     h0 = hypotheses.create_hypothesis(args.h_type, grammar)
-    data = data[0:96] # TODO: Just use first human's data as training? Change in the dataloading part once figured out
-    for i in range(len(data)):
-        print("Data chunk: ", i)
-        data_chunk = data[0:i+1]
-        infer(data_chunk, out, h0, grammar, sample_steps)
+    train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
     # Plot outputs
-    data_handling.plot_learn_curves(data_path, out, args.exp_type)
+    plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)

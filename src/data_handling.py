@@ -21,10 +21,11 @@ from LOTlib3.DataAndObjects import FunctionData
 def load(data_dir, alpha):
     """
     Loads and returns training data for the model (contexts -> labels).
-    Data is stored as a list of FunctionData objects. Each FunctionData object
-    represents a datum (one piece of data) with an input which is a list of two
-    multisets of colored objects, and an output which is true or false denoting 
-    if the input represents the current concept being learned.
+    There are, by default, 960 data points since each human sees 96 contexts
+    and there are 10 humans. Data is stored as a list of FunctionData objects. 
+    Each FunctionData object represents a datum (one piece of data) with an input 
+    which is a list of two multisets of colored objects, and an output which is 
+    true or false denoting if the input represents the current concept being learned.
 
     NOTE: This loading method gives a certain structure to data (i.e. two multisets). If such a structure is not desired as input,
     then another function ought to be created and thus another type of hypothesis (which works over another data input type)
@@ -34,23 +35,25 @@ def load(data_dir, alpha):
         - data_dir (str): Path to where data is stored. By default, there are multiple CSV files for one experiment type (representing each human). 
         - alpha (float): Assumed noisiness of data being loaded (i.e. incorrect labels, etc.)
 
-        TODO: What data are we using? Just the first human?
-
     Returns:
         - data (list): A list of FunctionData objects, LOTLib's specific data type for input/output pairs.
+        - n_contexts (int): Number of contexts seen per each human
     """
 
     data = []
+    n_contexts = 0
     colors = {"red": 0, "blue": 1, "green": 2, "yellow": 3}
 
     # Load all data files in experiment directory
     for f_name in os.listdir(data_dir):
+        n_contexts = 0
         path = data_dir + f_name
         df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
         # Iterate over rows and columns, create FunctionData objects
         df = df.loc[:, 'obj1':'corrAns'].dropna()
         for index, row in df.iterrows():
+            n_contexts += 1
             obj_sets = {}
             label = None
             for col in df:
@@ -69,32 +72,19 @@ def load(data_dir, alpha):
             else:
                 data.append(FunctionData(input=[obj_sets[key] for key in obj_sets], output=label, alpha=alpha))
 
-    return data
+    return data, n_contexts
 
-def plot_learn_curves(data_dir, out, exp_type):
+def h_acc(data_dir):
     """
-    Plots learning curves:
-        - Human Learning Curve: A plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
-        - Model Learning Curve: A plot of the concepts with (log) top posterior probability at each amount of data seen.
-        - Human/Model Learning Curve: A plot of average human accuracy AND this (non-average) model's accuracy over each amount of data seen.
-
-    To make more plots, add code below and preface it with plt.figure(n) to start a new plot.
+    Calculates human accuracies from each of the human data files in the data_dir.
 
     Parameters:
         - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
-        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
-        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
 
     Returns:
-        - None
+        - human_accuracies (numpy array): A matrix of all human accuracies (each row = human, each col = amount of data seen)
     """
-    ########################
-    # HUMAN LEARNING CURVE #
-    ########################
-
-    plt.figure(0)
-
-    # Ten human participants, 96 accuracy points on each
+    # Ten human participants, by default 96 accuracy points on each
     human_accuracies = []
 
     # Load all experiment data in data directory (each participant)
@@ -118,19 +108,40 @@ def plot_learn_curves(data_dir, out, exp_type):
 
         human_accuracies.append(accuracies)
 
-
     human_accuracies = np.array(human_accuracies)
-    avg_accuracies = pd.Series(np.average(human_accuracies, axis=0))
+    
+    return human_accuracies
+
+def plt_h_acc(data_dir, out, exp_id, exp_type):
+    """
+    Plots human learning curve, a plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
+    Saves a .png file of plot in experimental results folder.
+
+    Parameters:
+        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
+        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+        - exp_id (str): Identifier for this experiment run
+        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
+
+    Returns:
+        - None
+    """
+
+    plt.figure()
+
+    # Read human data files and get human accuracies
+    human_accuracies = h_acc(data_dir)
+    avg_hum_accuracies = pd.Series(np.average(human_accuracies, axis=0))
     sd_accuracies = pd.Series(np.std(human_accuracies, axis=0))
 
     # Seaborn
     sns.set(style="darkgrid")
-    plt.fill_between(x=np.arange(len(avg_accuracies)),
-                 y1=avg_accuracies - sd_accuracies,
-                 y2=avg_accuracies + sd_accuracies,
+    plt.fill_between(x=np.arange(len(avg_hum_accuracies)),
+                 y1=avg_hum_accuracies - sd_accuracies,
+                 y2=avg_hum_accuracies + sd_accuracies,
                  alpha=0.25
                  )
-    plt.plot(np.arange(len(avg_accuracies)), avg_accuracies)
+    plt.plot(np.arange(len(avg_hum_accuracies)), avg_hum_accuracies)
 
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
@@ -138,19 +149,40 @@ def plot_learn_curves(data_dir, out, exp_type):
     plt.ylabel("Avg. Human Accuracy", fontsize=12)
     plt.title("Human Learning Curve \n(" + exp_type + ")")
     # plt.show()
-    plt.savefig(out + '_human_plot.png', dpi=400)
+    plt.savefig(out + exp_id + "/" + exp_id + '_human_plot.png', dpi=400)
 
+def plt_mprob(data_dir, out, exp_id, exp_type):
+    """
+    Plots the top hypothesis over all models trained per data seen, along with the posterior probability of that hypothesis.
+    NOTE: Uses default Pandas method of tiebreaking
+    Saves a .png file of plot in experimental results folder.
 
-    #########################################################
-    # MODEL LEARNING CURVE (top concept at each # data seen)#
-    #########################################################
+    Parameters:
+        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
+        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+        - exp_id (str): Identifier for this experiment run
+        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
 
-    plt.figure(1)
+    Returns:
+        - None
+    """
 
-    df = pd.read_csv(out + "_prob.csv", sep='|')
-    hypotheses = df['hypothesis']
+    plt.figure()
+
+    dfs = []
+
+    # Append data frames to model_probs
+    for f_name in os.listdir(out + exp_id):
+        path = out + exp_id + "/" + f_name
+        if "_prob_" not in path:
+            continue
+        dfs.append(pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|"))
+     
+    # Data frame that finds max hypothesis/prob pair per each row over all models
+    df = pd.concat(dfs).min(level=0)
     model_probs = df['post_prob']
-
+    hypotheses = df['hypothesis']
+    
     # Seaborn
     sns.set(style="darkgrid")
     plt.plot(np.arange(len(model_probs)), model_probs, '.-')
@@ -165,29 +197,51 @@ def plot_learn_curves(data_dir, out, exp_type):
     for i in range(0, len(model_probs), 11):
         plt.text(i, model_probs[i], hypotheses[i], **style)
     # plt.show()
-    plt.savefig(out + '_prob.png', dpi=400)
+    plt.savefig(out + exp_id + "/" + exp_id +'_prob.png', dpi=400)
 
+def plt_hm_acc(data_dir, out, exp_id, exp_type):
+    """
+    Plots the average human accuracy and average model accuracy per data seen.
+    Saves a .png file of plot in experimental results folder.
 
-    ################################
-    # HUMAN + MODEL LEARNING CURVE #
-    ################################
-    plt.figure(2)
+    Parameters:
+        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
+        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
+        - exp_id (str): Identifier for this experiment run
+        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
 
-    df = pd.read_csv(out + "_acc.csv", sep='|')
-    hypotheses = df['hypothesis']
-    model_acc = df['acc']
+    Returns:
+        - None
+    """
+
+    plt.figure()
+
+    # Get average model accuracy and avg human accuracy
+    model_accuracies = []
+
+    for f_name in os.listdir(out + exp_id):
+        path = out + exp_id + "/" + f_name
+        if "_acc_" not in path:
+            continue
+        df = pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|")
+        model_accuracies.append(df['acc'])
+    
+    model_accuracies = np.array(model_accuracies)
+    avg_mod_accuracies = pd.Series(np.average(model_accuracies, axis=0))
+    human_accuracies = h_acc(data_dir)
+    avg_hum_accuracies = pd.Series(np.average(human_accuracies, axis=0))
 
     # Seaborn
     sns.set(style="darkgrid")
-    plt.plot(avg_accuracies)
-    plt.plot(model_acc)
+    plt.plot(avg_hum_accuracies)
+    plt.plot(avg_mod_accuracies)
 
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Accuracy", fontsize=12)
     plt.title("Human and Model Accuracy Over Data Seen \n(" + exp_type + ")")
-    plt.legend(['Average Human Accuracy', 'Model Accuracy'])
+    plt.legend(['Average Human Accuracy', 'Average Model Accuracy'])
 
     # plt.show()
-    plt.savefig(out + '_acc.png', dpi=400)
+    plt.savefig(out + exp_id + "/" + exp_id + '_acc.png', dpi=400)

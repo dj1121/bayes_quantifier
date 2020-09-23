@@ -21,11 +21,11 @@ To test out the program for yourself on some sample data (monotone only) with de
 
 To run a custom experiment, the program can be specified on the command line as follows (from inside the src folder):
 
-`python run_experiment.py exp_type -data_dir -out -g_type -h_type -sample_steps -alpha`
+`python run_experiment.py [exp_type] -data_dir [data_dir] -out [out] -g_type [g_type] -h_type [h_type] -sample_steps [sample_steps] -alpha [alpha]`
 
 The parameters serve the following functions:
 
-- exp_type (REQUIRED!): String specifying the experiment type (monotone, non-convex, non-monotone, etc.)
+- exp_type (REQUIRED): String specifying the experiment type (monotone, non-convex, non-monotone, etc.)
 - data_dir (default = ./../sample_data/monotone/): String specifying where training data is located
 - out (default = ./../model_out/): String specifying where model performance results will be stored
 - g_type (default = quant): What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py
@@ -120,14 +120,21 @@ if g_type == "quant":
 This grammar assumes hypotheses will be defined over two sets and applies uniform probability weight to all productions. Creating new grammars allows for easy experimentation over possible priors. For more information on grammars, refer to [LOTLib3 documentation](https://github.com/piantado/LOTlib3/blob/master/Documentation/Tutorial.md)
 
 ## Analyzing Results
-By default, this program outputs two .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that the humans see. Output files are stored by default in results, a folder which is created in the main directory of the program.
+By default, this program outputs .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that humans see. Output files are stored by default in results/exp_id/, a folder which is created in the main directory of the program.
 
-Output files are named according to the date, time, and result type. For example, if a monotone quantifier learning experiment was run on September 14th, 2020 at 10:53:14 and the results sorted in the file are accuracies, the name would be:
+Output files are named according to the date, time, and result type. For example, if a monotone quantifier learning experiment was run on September 14th, 2020 at 10:53:14 and the results file names woudld start with:
 
-`20200914-105314_monotone_acc.csv`
+`20200914-105314_monotone_`
 
 ### _acc Files
-Files ending in `_acc` store the accuracy results of the learning model. Each line shows the top hypothesis (most probable) per amount of data seen (line 1 = one data point, line 30 = thirty data points, etc.) and the accuracy of running that hypothesis over all the data currently seen. Some example lines:
+Files ending in `_acc` store the accuracy results of a learning model. Each line shows the top hypothesis (most probable) per amount of data seen (line 1 = one data point, line 30 = thirty data points, etc.) and the accuracy of running that hypothesis over all the data currently seen. Since there are as many models as there are humans, there may be multiple `_acc` files like:
+```
+20200914-105314_monotone_acc_1.csv
+20200914-105314_monotone_acc_2.csv
+...
+```
+
+Some example lines:
 
 ```
 hypothesis|acc
@@ -140,8 +147,13 @@ This means that after seeing one data point (first line), the model guesses that
 
 
 ### _prob Files
-Files ending in `_prob` store the (log) posterior probabilities of the learning model. Each line also shows the top hypothesis (most probable) per amount of data seen and its posterior probability. Example lines:
-
+Files ending in `_prob` store the (log) posterior probabilities of the learning model. Each line also shows the top hypothesis (most probable) per amount of data seen and its posterior probability. Since there are as many models as there are humans, there may be multiple `_prob` files like:
+```
+20200914-105314_monotone_prob_1.csv
+20200914-105314_monotone_prob_2.csv
+...
+``` 
+Example lines:
 ```
 hypothesis|post_prob
 lambda A, B: issuper_(A, B)|-3.7128326951364294
@@ -156,4 +168,4 @@ In the results folder, by default for each experiment, one can also find the fol
 
 - <b>Model Learning Curve:</b> A plot of the concepts with (log) top posterior probability at each amount of data seen.
 
-- <b>Human/Model Learning Curve:</b> A plot of average human accuracy AND this (non-average) model's accuracy over each amount of data seen.
+- <b>Human/Model Learning Curve:</b> A plot of average human accuracy and average model accuracy over each amount of data seen.
