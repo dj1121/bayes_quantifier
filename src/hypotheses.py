@@ -26,6 +26,13 @@ class HypothesisA(LOTHypothesis):
     def compute_single_likelihood(self, datum):
         return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
 
+    def eval(self, datum):
+        """
+        See if the hypothesis evaluates the data point to the correct label
+        (logically true when should be true, logically false when should be false)
+        """
+        return self(*datum.input) == datum.output
+
 def create_hypothesis(h_type, grammar):
     """
     Uses a grammar and a specified hypothesis type to create an object

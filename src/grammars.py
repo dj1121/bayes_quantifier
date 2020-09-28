@@ -12,7 +12,7 @@ def create_grammar(g_type):
 
     """
     Creates a grammar of a specified type and allows definition of grammar rules with their
-    probabilities.
+    probabilities. LOTLib3 primitives end in _
 
     Parameters:
         - g_type (str): Grammar type specified on command line. If you wish to create a new
@@ -26,8 +26,7 @@ def create_grammar(g_type):
     if g_type == "quant":
         grammar = Grammar(start='BOOL')
 
-        grammar.add_rule('BOOL', 'issubset_', ['SET', 'SET'], 1.0)
-        grammar.add_rule('BOOL', 'issuper_', ['SET', 'SET'], 1.0)
+        grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1.0) # subset_(B,A) returns if B subset of A
         grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
         grammar.add_rule('BOOL', 'lt', ['NUM', 'NUM'], 1.0)
         grammar.add_rule('BOOL', 'gt', ['NUM', 'NUM'], 1.0)

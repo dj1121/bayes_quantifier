@@ -76,13 +76,14 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
             f.write(str(h) + "|" + str(h.posterior_score) + "\n")
         f.close()
     
-    # With best concept(s), record accuracy over all data provided
+    # With best concept, record accuracy over all data provided
     with open(args.out + exp_id + "/" + exp_id + "_acc_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
-        num_correct = 0
         total = len(data)
+        num_correct = 0
         for h in TN.get_all(sorted=True):
             for datum in data:
-                if h.compute_single_likelihood(datum) == log(datum.alpha):
+                # If the model guesses the right training label
+                if h.eval(datum):
                     num_correct += 1
             f.write(str(h) + "|" + str(float(num_correct/total)) + "\n")
         f.close()
@@ -140,7 +141,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
         print("Training Model:", i + 1, "of", len(data_split))
         for j in range(len(model_i_data)):
             data_chunk = model_i_data[0:j+1]
-            print("Model " + str(i + 1) + ", Data Seen:", j+1)
+            print("Model " + str(i + 1) + ", Amount Data:", j+1)
             infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, model_num=i+1)
 
 if __name__ == "__main__":

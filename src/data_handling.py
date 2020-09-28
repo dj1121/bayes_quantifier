@@ -31,6 +31,8 @@ def load(data_dir, alpha):
     then another function ought to be created and thus another type of hypothesis (which works over another data input type)
     in hypotheses.py.
 
+    NOTE: Training labels are assumed to be key_resp_monotonicity.corr
+
     Parameters:
         - data_dir (str): Path to where data is stored. By default, there are multiple CSV files for one experiment type (representing each human). 
         - alpha (float): Assumed noisiness of data being loaded (i.e. incorrect labels, etc.)
@@ -51,7 +53,7 @@ def load(data_dir, alpha):
         df = pd.read_csv(open(path, 'r', encoding="utf-8"))
 
         # Iterate over rows and columns, create FunctionData objects
-        df = df.loc[:, 'obj1':'corrAns'].dropna()
+        df = df.loc[:, 'key_resp_monotonicity.corr':'obj6'].dropna()
         for index, row in df.iterrows():
             n_contexts += 1
             obj_sets = {}
@@ -63,10 +65,11 @@ def load(data_dir, alpha):
                         obj_sets[row[col]].add(colors[row[col]])
                     else:
                         obj_sets[row[col]].add(colors[row[col]])
+                elif "key_resp_monotonicity.corr" in col:
+                    label = (row[col] == 1) # 0 means False
                 else:
-                    # If "corrAns" column is c, output = true, else = false
-                    label = (row[col] == "c")
-
+                    continue
+                    
             if len(obj_sets) == 1: # If all items are same color, make an empty multiset as the second argument
                 data.append(FunctionData(input=[obj_sets[key] for key in obj_sets] + [Multiset()], output=label, alpha=alpha))
             else:
@@ -202,7 +205,7 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
 def plt_hm_acc(data_dir, out, exp_id, exp_type):
     """
     Plots the average human accuracy and average model accuracy per data seen.
-    Saves a .png file of plot in experimental results folder.
+    Saves a .png file of plot in experimental results folder. If avg_acc=False
 
     Parameters:
         - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
@@ -214,9 +217,6 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
         - None
     """
 
-    plt.figure()
-
-    # Get average model accuracy and avg human accuracy
     model_accuracies = []
 
     for f_name in os.listdir(out + exp_id):
@@ -225,11 +225,16 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
             continue
         df = pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|")
         model_accuracies.append(df['acc'])
-    
+
     model_accuracies = np.array(model_accuracies)
     avg_mod_accuracies = pd.Series(np.average(model_accuracies, axis=0))
     human_accuracies = h_acc(data_dir)
     avg_hum_accuracies = pd.Series(np.average(human_accuracies, axis=0))
+
+    ###########################
+    #### Average Curve ####
+    ###########################
+    plt.figure()
 
     # Seaborn
     sns.set(style="darkgrid")
@@ -239,9 +244,35 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
+    plt.yticks((np.arange(0, 1, 0.1)))
     plt.ylabel("Accuracy", fontsize=12)
     plt.title("Human and Model Accuracy Over Data Seen \n(" + exp_type + ")")
     plt.legend(['Average Human Accuracy', 'Average Model Accuracy'])
 
     # plt.show()
     plt.savefig(out + exp_id + "/" + exp_id + '_acc.png', dpi=400)
+
+    ###########################
+    #### Individual Curves ####
+    ###########################
+    for i in range(0, len(model_accuracies)):
+        plt.figure()
+
+        # Seaborn
+        sns.set(style="darkgrid")
+        plt.plot(human_accuracies[i])
+        plt.plot(model_accuracies[i])
+
+        # Labels
+        plt.xlabel("# Contexts Seen", fontsize=12)
+        plt.xticks(np.arange(0, 100, 12))
+        plt.yticks((np.arange(0, 1.1, 0.1)))
+        plt.ylabel("Accuracy", fontsize=12)
+        plt.title("Human and Model Accuracy Over Data Seen, " + "Model/Human # " + str(i+1) +  "\n(" + exp_type + ")")
+        plt.legend(['Human Accuracy', 'Model Accuracy'])
+
+        # plt.show()
+        plt.savefig(out + exp_id + "/" + exp_id + '_acc' + str(i+1) + '.png', dpi=400)
+
+# FOR AS NEEDED PLOTTING/TESTING ONLY
+# plt_hm_acc("./../data/non_convex/", "./../results/", "20200924-101529_non_convex", "non_convex")
