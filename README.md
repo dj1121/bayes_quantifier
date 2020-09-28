@@ -168,4 +168,4 @@ In the results folder, by default for each experiment, one can also find the fol
 
 - <b>Model Learning Curve:</b> A plot of the concepts with (log) top posterior probability at each amount of data seen.
 
-- <b>Human/Model Learning Curve:</b> A plot of average human accuracy and average model accuracy over each amount of data seen.
+- <b>Human/Model Learning Curves:</b> Plots of average human accuracy and average model accuracy over each amount of data seen and plots of individual model/humans accuracies
