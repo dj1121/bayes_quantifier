@@ -8,13 +8,21 @@
 from LOTlib3.Eval import primitive
 
 @primitive
-def gt(x,y):
+def card_gt(x,y):
     return x > y
 
 @primitive
-def lt(x,y):
+def card_gteq(x,y):
+    return x >= y
+
+@primitive
+def card_lt(x,y):
     return x < y
 
 @primitive
-def num_eq(x, y):
+def card_lteq(x,y):
+    return x <= y
+
+@primitive
+def card_eq(x, y):
     return x == y

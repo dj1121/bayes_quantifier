@@ -247,7 +247,7 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     plt.yticks((np.arange(0, 1, 0.1)))
     plt.ylabel("Accuracy", fontsize=12)
     plt.title("Human and Model Accuracy Over Data Seen \n(" + exp_type + ")")
-    plt.legend(['Average Human Accuracy', 'Average Model Accuracy'])
+    plt.legend(['Average Model Accuracy', 'Average Human Accuracy'])
 
     # plt.show()
     plt.savefig(out + exp_id + "/" + exp_id + '_acc.png', dpi=400)
@@ -269,10 +269,10 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
         plt.yticks((np.arange(0, 1.1, 0.1)))
         plt.ylabel("Accuracy", fontsize=12)
         plt.title("Human and Model Accuracy Over Data Seen, " + "Model/Human # " + str(i+1) +  "\n(" + exp_type + ")")
-        plt.legend(['Human Accuracy', 'Model Accuracy'])
+        plt.legend(['Model Accuracy', 'Human Accuracy'])
 
         # plt.show()
         plt.savefig(out + exp_id + "/" + exp_id + '_acc' + str(i+1) + '.png', dpi=400)
 
 # FOR AS NEEDED PLOTTING/TESTING ONLY
-# plt_hm_acc("./../data/non_convex/", "./../results/", "20200924-101529_non_convex", "non_convex")
+# plt_hm_acc("./../data/monotone/", "./../results/", "20200928-124842_monotone", "monotone")

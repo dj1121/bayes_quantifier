@@ -26,19 +26,30 @@ def create_grammar(g_type):
     if g_type == "quant":
         grammar = Grammar(start='BOOL')
 
+        # Set operations
         grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1.0) # subset_(B,A) returns if B subset of A
         grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
-        grammar.add_rule('BOOL', 'lt', ['NUM', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'gt', ['NUM', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'num_eq', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'card_lt', ['CARD', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'card_gt', ['CARD', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'card_eq', ['CARD', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'card_lteq', ['CARD', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'card_gteq', ['CARD', 'NUM'], 1.0)
 
-        grammar.add_rule('NUM', 'cardinality_', ['SET'], 1.0)
-        for n in range(0,10):
-            grammar.add_rule('NUM', str(n), None, 1.0)
+        grammar.add_rule('CARD', 'cardinality_', ['SET'], 1.0)
 
         grammar.add_rule('SET', 'intersection_', ['SET', 'SET'], 1.0)
         grammar.add_rule('SET', 'union_', ['SET', 'SET'], 1.0)
         grammar.add_rule('SET', 'setdifference_', ['SET', 'SET'], 1.0)
+
+        # Basic boolean logic
+        grammar.add_rule('BOOL', 'and_', ['BOOL', 'BOOL'], 1.0)
+        grammar.add_rule('BOOL', 'or_', ['BOOL', 'BOOL'], 1.0)
+        grammar.add_rule('BOOL', 'not_', ['BOOL'], 1.0)
+
+        # Terminals
+        for n in range(0,10):
+            grammar.add_rule('NUM', str(n), None, 1.0)
+
         grammar.add_rule('SET', 'A', None, 5)
         grammar.add_rule('SET', 'B', None, 5)
         

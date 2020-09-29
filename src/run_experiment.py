@@ -52,6 +52,12 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     words, conducts inference/compute posterior over data given. Writes results to
     output files stored in model_out.
 
+    NOTE: This function automatically skips over trivial hypotheses, i.e. hypotheses with multiple elements which are all 
+          equal such as:
+            - subset_(A,A)
+            - intersection(B,B)
+            - etc.
+
     Parameters:
         - data (list): A list of FunctionData objects, a data type of LOTLib specifying input/output pairs for training
         - out (str): A path to where output files will be stored (model accuracy, probabilities, etc.)
@@ -71,7 +77,19 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     # Record top N concept(s) with top posterior probability over this data/steps
     with open(args.out + exp_id + "/" + exp_id + "_prob_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
+            # Check if it's a trivial hypothesis and if so, skip it
+            # TODO: Keep this or remove?
+            if len(h.value.args) > 1:
+                skip = True
+                for i in range(1, len(h.value.args)):
+                    if h.value.args[i] != h.value.args[i-1]:
+                        skip = False
+                        break
+                if skip:
+                    continue
+            # Otherwise add it to our topN
             TN.add(h)
+        # Output
         for h in TN.get_all(sorted=True):
             f.write(str(h) + "|" + str(h.posterior_score) + "\n")
         f.close()
