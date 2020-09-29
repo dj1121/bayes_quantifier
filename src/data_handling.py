@@ -149,6 +149,7 @@ def plt_h_acc(data_dir, out, exp_id, exp_type):
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
+    plt.yticks((np.arange(0, 1.1, 0.1)))
     plt.ylabel("Avg. Human Accuracy", fontsize=12)
     plt.title("Human Learning Curve \n(" + exp_type + ")")
     # plt.show()
