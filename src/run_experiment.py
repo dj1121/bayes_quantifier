@@ -17,6 +17,7 @@ import primitives
 import data_handling
 import grammars
 import hypotheses
+import visualize
 
 # LOTLib
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
@@ -119,9 +120,9 @@ def plot(data, out, exp_id, exp_type):
     Returns:
         - None
     """
-    data_handling.plt_h_acc(data, out, exp_id, exp_type)
-    data_handling.plt_hm_acc(data, out, exp_id, exp_type)
-    data_handling.plt_mprob(data, out, exp_id, exp_type)
+    visualize.plt_h_acc(data, out, exp_id, exp_type)
+    visualize.plt_hm_acc(data, out, exp_id, exp_type)
+    visualize.plt_mprob(data, out, exp_id, exp_type)
 
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
     """
