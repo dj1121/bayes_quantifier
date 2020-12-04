@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
+    parser.add_argument("-lam",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     args = parser.parse_args()
     return args
 
@@ -178,9 +179,10 @@ if __name__ == "__main__":
     data, n_contexts = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps  
+    lam = args.lam
 
     # Select a starting hypothesis and train
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam)
     train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
     # Plot outputs

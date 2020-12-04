@@ -14,8 +14,15 @@ class HypothesisA(LOTHypothesis):
     as seen in Goodman et al. 2010.
     """
 
+    # Class attributes
+    degree_monotonicity = None
+    lam = None
+    data = None
+
     def __init__(self, **kwargs):
         LOTHypothesis.__init__(self, display="lambda A, B: %s", **kwargs)
+        self.degree_monotonicity = self.compute_degree_monotonicity(kwargs.get('data', []))
+        self.lam = kwargs.get('lam', 0.0)
         
     def __call__(self, *args):
         try:
@@ -32,8 +39,20 @@ class HypothesisA(LOTHypothesis):
         (logically true when should be true, logically false when should be false)
         """
         return self(*datum.input) == datum.output
+    
+    def compute_prior(self):
+        """
+        Overriden prior computation to allow for lambda*degree of monotonicity.
+        """
+        return super().compute_prior() + (self.lam * self.degree_monotonicity) 
 
-def create_hypothesis(h_type, grammar):
+    def compute_degree_monotonicity(self):
+        """
+        Compute degree of monotonicity, similar to that seen in Carcassi et al. 2019
+        """
+        return 0
+
+def create_hypothesis(h_type, grammar, data, lam):
     """
     Uses a grammar and a specified hypothesis type to create an object
     of the desired hypothesis class. This is used to be able to return
@@ -45,12 +64,14 @@ def create_hypothesis(h_type, grammar):
         and add capability to this function to return a hypothesis of that type.
         - grammar (LOTLib3.Grammar): A grammar with which possible hypotheses of the type passed in will
         be generated
+        - data (list): Data to pass in in order to compute degree of monotonicity
+        - lam (float): Lambda value [0,1] to give weight to degree of monotonicity
 
     Returns:
         - (LOTLib3.Hypothesis): A hypothesis of the type specified with the grammar specified.
         - None: If the hypothesis specified does not exist yet (you must create it).
     """
     if h_type == "A":
-        return HypothesisA(grammar=grammar)
+        return HypothesisA(grammar=grammar, data=data, lam=lam)
     else:
         raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')
