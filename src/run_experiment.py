@@ -36,14 +36,14 @@ def parse_args():
         - args (argparse.Namespace): The list of arguments passed in
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("exp_type", type=str, help="Experiment type (e.g. monotone, non_convex, or non_monotone)", default="monotone") # Required
-    parser.add_argument("-data_dir",type=str, help = "Path to data", default ="./../sample_data/")
+    parser.add_argument("exp_type", type=str, help="Experiment type (specify folder name of data for quantifier of choice)", default="at_most_2") # Required
+    parser.add_argument("-data_dir",type=str, help = "Path to main data directory (not specific quantifier)", default ="./../sample_data/")
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
-    parser.add_argument("-lam",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
+    parser.add_argument("-lam",type=float, help = "How much weight to give to degree of universality [0,1]", default=0.0)
     args = parser.parse_args()
     return args
 
@@ -80,7 +80,7 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     with open(args.out + exp_id + "/" + exp_id + "_prob_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             # Check if it's a trivial hypothesis and if so, skip it
-            # TODO: Keep this or remove?
+            # TODO: Keep this feature or remove?
             if len(h.value.args) > 1:
                 skip = True
                 for i in range(1, len(h.value.args)):

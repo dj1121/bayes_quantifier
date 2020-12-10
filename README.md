@@ -15,23 +15,25 @@ This repository contains code for experiments in the following paper:
 
 ## Running an Experiment
 
-To test out the program for yourself on some sample data (monotone only) with default parameters, you can simply run (from inside the src folder):
+To test out the program for yourself on some sample data ("at least 2" quantifier) with default parameters, you can simply run (from inside the src folder):
 
-`python run_experiment.py monotone`
+`python run_experiment.py at_most_2`
 
-To run a custom experiment, the program can be specified on the command line as follows (from inside the src folder):
+Note, the results you'll get will most probably be gibberish, since the sample data itself follows no consistent patterns. The sample data is only to 
+understand how the program works. To run a custom experiment, the program can be specified on the command line as follows (from inside the src folder):
 
 `python run_experiment.py [exp_type] -data_dir [data_dir] -out [out] -g_type [g_type] -h_type [h_type] -sample_steps [sample_steps] -alpha [alpha]`
 
 The parameters serve the following functions:
 
-- exp_type (REQUIRED): String specifying the experiment type (monotone, non-convex, non-monotone, etc.)
-- data_dir (default = ./../sample_data/monotone/): String specifying where training data is located
+- exp_type (REQUIRED): Experiment type (specify folder name of data for quantifier of choice)
+- data_dir (default = ./../sample_data/monotone/): Path to main data directory (not specific quantifier)
 - out (default = ./../model_out/): String specifying where model performance results will be stored
 - g_type (default = quant): What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py
 - h_type (default = A): What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py
 - sample_steps (default = 5000): How many steps to run the metropolis-hasting sampler
 - alpha (default = 0.99): Assumed noisiness of data (min = 1.0)
+- lam (default = 0.0) How much weight to give to degree of universality
 
 NOTE: The data directory (data_dir) only points to where your experimental data files are located. Experimental data MUST be further divided into folders based
 upon experiment. The exp_type argument is then used to find the correct folder of data inside the data_dir. In sum, your data file structure, given multiple experiment types,
@@ -39,17 +41,17 @@ should look like this:
 
 ```
 data_dir
-|-- monotone
-|      -- mono_1.csv
-|      -- mono_2.csv
+|-- quantifier_1
+|      -- q1_1.csv
+|      -- q2.csv
 |      -- ....csv
-|-- non_monotone
-|      -- non_mono_1.csv
-|      -- non_mono_2.csv
+|-- quantifier_2
+|      -- q2_1.csv
+|      -- q2_2.csv
 |      -- ....csv
-|-- non_convex
-|      -- non_convex_1.csv
-|      -- non_convex_2.csv
+|-- quantifier_3
+|      -- q3_1.csv
+|      -- q3_2.csv
 |      -- ....csv
 |-- ...
 |      -- ....csv
@@ -122,15 +124,15 @@ This grammar assumes hypotheses will be defined over two sets and applies unifor
 ## Analyzing Results
 By default, this program outputs .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that humans see. Output files are stored by default in results/exp_id/, a folder which is created in the main directory of the program.
 
-Output files are named according to the date, time, and result type. For example, if a monotone quantifier learning experiment was run on September 14th, 2020 at 10:53:14 and the results file names woudld start with:
+Output files are named according to the date, time, and result type. For example, if a quantifier ("at least 2") learning experiment was run on September 14th, 2020 at 10:53:14 and the results file names woudld start with:
 
-`20200914-105314_monotone_`
+`20200914-105314_at_most_2_`
 
 ### _acc Files
 Files ending in `_acc` store the accuracy results of a learning model. Each line shows the top hypothesis (most probable) per amount of data seen (line 1 = one data point, line 30 = thirty data points, etc.) and the accuracy of running that hypothesis over all the data currently seen. Since there are as many models as there are humans, there may be multiple `_acc` files like:
 ```
-20200914-105314_monotone_acc_1.csv
-20200914-105314_monotone_acc_2.csv
+20200914-105314_at_most_2_acc_1.csv
+20200914-105314_at_most_2_acc_2.csv
 ...
 ```
 
@@ -149,8 +151,8 @@ This means that after seeing one data point (first line), the model guesses that
 ### _prob Files
 Files ending in `_prob` store the (log) posterior probabilities of the learning model. Each line also shows the top hypothesis (most probable) per amount of data seen and its posterior probability. Since there are as many models as there are humans, there may be multiple `_prob` files like:
 ```
-20200914-105314_monotone_prob_1.csv
-20200914-105314_monotone_prob_2.csv
+20200914-105314_at_most_2_prob_1.csv
+20200914-105314_at_most_2_prob_2.csv
 ...
 ``` 
 Example lines:

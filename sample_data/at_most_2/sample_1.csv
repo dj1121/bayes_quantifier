@@ -7,7 +7,7 @@ key_resp_monotonicity.corr,obj1,obj2,obj3,obj4,obj5,obj6
 0,blue,blue,blue,blue,blue,red
 1,blue,blue,red,red,red,red
 1,blue,red,red,red,red,red
-1,blue,blue,blue,blue,blue,red
+1,blue,blue,gray,blue,blue,red
 0,blue,blue,blue,red,red,red
 1,red,red,red,red,red,red
 1,blue,blue,blue,blue,red,red
@@ -16,13 +16,13 @@ key_resp_monotonicity.corr,obj1,obj2,obj3,obj4,obj5,obj6
 0,yellow,yellow,blue,blue,blue,blue
 1,yellow,yellow,yellow,blue,blue,blue
 1,yellow,yellow,yellow,yellow,yellow,blue
-1,yellow,yellow,yellow,yellow,blue,blue
+1,yellow,gray,yellow,yellow,blue,blue
 1,yellow,blue,blue,blue,blue,blue
 1,blue,blue,blue,blue,blue,blue
 1,yellow,yellow,yellow,yellow,yellow,blue
 1,yellow,yellow,blue,blue,blue,blue
 1,yellow,blue,blue,blue,blue,blue
-0,yellow,yellow,yellow,yellow,blue,blue
+0,yellow,yellow,yellow,gray,blue,blue
 1,yellow,yellow,yellow,blue,blue,blue
 1,blue,blue,blue,blue,blue,blue
 ,,,,,,
@@ -35,7 +35,7 @@ key_resp_monotonicity.corr,obj1,obj2,obj3,obj4,obj5,obj6
 0,red,red,blue,blue,blue,blue
 1,red,red,red,red,red,blue
 1,red,red,red,blue,blue,blue
-1,blue,blue,blue,blue,blue,blue
+1,blue,blue,blue,gray,blue,blue
 1,red,red,blue,blue,blue,blue
 1,red,red,red,red,blue,blue
 1,red,blue,blue,blue,blue,blue
