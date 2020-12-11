@@ -7,12 +7,50 @@
 import os
 import numpy as np
 from multiset import *
+from itertools import combinations_with_replacement
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 # LOTLib3
 from LOTlib3.DataAndObjects import FunctionData, Obj
+
+    
+def generate_possible_contexts(colors, shapes, max_num_objects):
+    """
+    Generate possible contexts
+
+    Parameters:
+        - colors (list (str)) List of unique color names as seen in data (i.e. ['red', 'blue'])
+        - shapes (list (float)) List of unique shape numbers (i.e. 3.0, 100.0)
+        - max_num_objects (int) Maximum number of objects per context
+
+    Returns:
+        - 
+    """
+    contexts = []
+
+    A_B_possible = [] # List of tuples of format (possible A set, [list of possible B sets corresponding])
+
+    # Generate A sets
+    for i in range(0, max_num_objects + 1):
+        c = list(combinations_with_replacement(colors, i)) # Generate all possible combos of length i and colors
+        
+        for j in range(0, len(c)): # List of tuples
+            curr_A_set = Multiset() # Construct a possible A set from current tuple
+            curr_tuple = c[j]
+
+            for k in range(0, len(curr_tuple)):
+                curr_A_set.add(Obj(color=curr_tuple[k], shape=3.0))
+
+            A_B_possible.append((curr_A_set, []))
+    
+    # Generate B sets
+    print(A_B_possible)
+
+    
+
+                
 
 def load(data_dir, alpha):
     """
@@ -70,6 +108,8 @@ def load(data_dir, alpha):
             
             # Split objects into appropriate sets
             for o in context_objects:
+                if o.color == 'gray':
+                    continue
                 if o.shape == 3.0:
                     set_A.add(o)
                 if o.color == 'red':
@@ -79,3 +119,6 @@ def load(data_dir, alpha):
             data.append(FunctionData(input=[set_A, set_B], output=label, alpha=alpha))
 
     return data, n_contexts
+
+
+generate_possible_contexts(['red', 'blue'], [3.0, 100.0], 8)

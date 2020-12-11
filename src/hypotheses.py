@@ -11,7 +11,8 @@ from math import log
 class HypothesisA(LOTHypothesis):
     """
     A hypothesis type which assumes two sets and a simple likelihood function
-    as seen in Goodman et al. 2010.
+    as seen in Goodman et al. 2010. Also incporates degrees of monotonicity 
+    and convexity.
     """
 
     # Class attributes
@@ -19,7 +20,7 @@ class HypothesisA(LOTHypothesis):
     degree_convexity = 0
     lam_1 = 0
     lam_2 = 0
-    data = None
+    all_contexts = None
 
     def __init__(self, **kwargs):
         LOTHypothesis.__init__(self, display="lambda A, B: %s", **kwargs)
@@ -27,13 +28,11 @@ class HypothesisA(LOTHypothesis):
         self.lam_1 = kwargs.get('lam_1', 0.0)
         self.lam_2 = kwargs.get('lam_2', 0.0)
 
-        # Only compute degrees if lambda weights present (otherwise it's a waste of resources)
         if self.lam1 > 0:
             self.degree_monotonicity = self.compute_degree_monotonicity()
         
         if self.lam2 > 0:
             self.degree_convexity = self.compute_degree_monotonicity()
-        
         
     def __call__(self, *args):
         try:
@@ -48,6 +47,7 @@ class HypothesisA(LOTHypothesis):
         """
         See if the hypothesis evaluates the data point to the correct label
         (logically true when should be true, logically false when should be false)
+        # TODO: Change this?
         """
         return self(*datum.input) == datum.output
     
@@ -67,7 +67,10 @@ class HypothesisA(LOTHypothesis):
         """
         Compute degree of convexity
         """
-        return 0
+        return 0     
+
+
+
 
 def create_hypothesis(h_type, grammar, data, lam_1, lam_2):
     """
