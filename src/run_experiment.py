@@ -43,7 +43,8 @@ def parse_args():
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
     parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
-    parser.add_argument("-lam",type=float, help = "How much weight to give to degree of universality [0,1]", default=0.0)
+    parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
+    parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of convexity [0,1]", default=0.0)
     args = parser.parse_args()
     return args
 
@@ -161,7 +162,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
         print("Training Model:", i + 1, "of", len(data_split))
         for j in range(len(model_i_data)):
             data_chunk = model_i_data[0:j+1]
-            print("Model " + str(i + 1) + ", Amount Data:", j+1)
+            print("Model " + str(i + 1) + ", Context #:", j+1)
             infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, model_num=i+1)
 
 if __name__ == "__main__":

@@ -15,14 +15,25 @@ class HypothesisA(LOTHypothesis):
     """
 
     # Class attributes
-    degree_monotonicity = None
-    lam = None
+    degree_monotonicity = 0
+    degree_convexity = 0
+    lam_1 = 0
+    lam_2 = 0
     data = None
 
     def __init__(self, **kwargs):
         LOTHypothesis.__init__(self, display="lambda A, B: %s", **kwargs)
-        self.degree_monotonicity = self.compute_degree_monotonicity(kwargs.get('data', []))
-        self.lam = kwargs.get('lam', 0.0)
+
+        self.lam_1 = kwargs.get('lam_1', 0.0)
+        self.lam_2 = kwargs.get('lam_2', 0.0)
+
+        # Only compute degrees if lambda weights present (otherwise it's a waste of resources)
+        if self.lam1 > 0:
+            self.degree_monotonicity = self.compute_degree_monotonicity()
+        
+        if self.lam2 > 0:
+            self.degree_convexity = self.compute_degree_monotonicity()
+        
         
     def __call__(self, *args):
         try:
@@ -42,13 +53,19 @@ class HypothesisA(LOTHypothesis):
     
     def compute_prior(self):
         """
-        Overriden prior computation to allow for lambda*degree of monotonicity.
+        Overriden prior computation to allow for degrees of monotonicity and convexity.
         """
-        return super().compute_prior() + (self.lam * self.degree_monotonicity) 
+        return super().compute_prior() + (self.lam_1 * self.degree_monotonicity) + (self.lam_2 * self.degree_monotonicity)
 
     def compute_degree_monotonicity(self):
         """
         Compute degree of monotonicity, similar to that seen in Carcassi et al. 2019
+        """
+        return 0
+
+    def compute_degree_convexity(self):
+        """
+        Compute degree of convexity
         """
         return 0
 
