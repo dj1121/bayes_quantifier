@@ -69,7 +69,7 @@ class HypothesisA(LOTHypothesis):
         """
         return 0
 
-def create_hypothesis(h_type, grammar, data, lam):
+def create_hypothesis(h_type, grammar, data, lam_1, lam_2):
     """
     Uses a grammar and a specified hypothesis type to create an object
     of the desired hypothesis class. This is used to be able to return
@@ -82,13 +82,14 @@ def create_hypothesis(h_type, grammar, data, lam):
         - grammar (LOTLib3.Grammar): A grammar with which possible hypotheses of the type passed in will
         be generated
         - data (list): Data to pass in in order to compute degree of monotonicity
-        - lam (float): Lambda value [0,1] to give weight to degree of monotonicity
+        - lam_1 (float): Lambda value [0,1] to give weight to degree of monotonicity
+        - lam_2 (float): Lambda value [0,1] to give weight to degree of convexity
 
     Returns:
         - (LOTLib3.Hypothesis): A hypothesis of the type specified with the grammar specified.
         - None: If the hypothesis specified does not exist yet (you must create it).
     """
     if h_type == "A":
-        return HypothesisA(grammar=grammar, data=data, lam=lam)
+        return HypothesisA(grammar=grammar, data=data, lam_1=lam_1, lam_2=lam_2)
     else:
         raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')

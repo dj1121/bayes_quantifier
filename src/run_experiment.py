@@ -180,10 +180,11 @@ if __name__ == "__main__":
     data, n_contexts = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps  
-    lam = args.lam
+    lam_1 = args.lam_1
+    lam_2 = args.lam_2
 
     # Select a starting hypothesis and train
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2)
     train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
     # Plot outputs
