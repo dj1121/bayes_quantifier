@@ -175,7 +175,11 @@ if __name__ == "__main__":
     data_path = args.data_dir + "/" + args.exp_type + "/"
     exp_id = TIME + "_" + args.exp_type
     os.mkdir(args.out + exp_id + "/")
-    
+
+    # Load all possible contexts (for degrees of univ.)
+    # Better than doing in hypothesis class since this only needs calculation once
+    all_contexts = data_handling.generate_possible_contexts(['red','blue'], [3.0, 100.0], 8)
+
     # Load data, create grammar
     data, n_contexts = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
@@ -184,7 +188,7 @@ if __name__ == "__main__":
     lam_2 = args.lam_2
 
     # Select a starting hypothesis and train
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2, all_contexts)
     train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
     # Plot outputs

@@ -5,10 +5,9 @@
 # Email: dj1121@uw.edu
 # -----------------------------------------------------------
 
-from data_handling import generate_possible_contexts
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from math import log
-import pandas as pd
+from os import path
 
 class HypothesisA(LOTHypothesis):
     """
@@ -31,10 +30,8 @@ class HypothesisA(LOTHypothesis):
         self.lam_2 = kwargs.get('lam_2', 0.0)
 
         if self.lam_1 > 0 or self.lam_2 > 0:
-            # Generate/load contexts for degrees of universality
-            generate_possible_contexts(['red', 'blue'], [3.0, 100.0], 8)
-            self.all_contexts = pd.read_csv("./../data/contexts.csv")
-            print(self.all_contexts)
+            # Load in the contexts in a FunctionData/Multiset format useful for finding submodels in degree calculations
+            self.all_contexts = kwargs.get('all_contexts', None)
 
         if self.lam_1 > 0:
             self.degree_monotonicity = self.compute_degree_monotonicity()
@@ -51,14 +48,41 @@ class HypothesisA(LOTHypothesis):
     def compute_single_likelihood(self, datum):
         return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
 
-    def eval(self, datum):
+    def qm(self, m):
         """
-        See if the hypothesis evaluates the data point to the correct label
-        (logically true when should be true, logically false when should be false)
-        # TODO: Change this?
+        Evaluate the hypothesis on a given data point. That is, get its truth value on a
+        given context. In theoretical terms: 1^Q(M) where M is the context.
+
+        Parameters:
+            - self
+            - m (List of multisets): A given context (data input)
+
+        Returns:
+            - The truth value of the hypothesis evaluated on this model (context) m
+
         """
-        return self(*datum.input) == datum.output
+        return self(*m.input)
     
+    def sub_qm(self, m):
+        """
+        Find if the hypothesis evaluates to true in any of the submodels of the given model (context) m.
+        A submodel is defined to be identical to the current model, where only B changes to B' such that B' \subseteq B
+        
+        Parameters:
+            - self
+            - m (List of multisets): A given context (data input)
+
+        Returns:
+            - True if there exists a submodel m' where the hypothesis evaluates to true    
+        """
+        # Iterate over submodels
+        for context in self.all_contexts:
+            curr = context.input[1]
+            if curr.issubset(m) and qm(curr):
+                return True
+
+        return False
+
     def compute_prior(self):
         """
         Overriden prior computation to allow for degrees of monotonicity and convexity.
@@ -78,9 +102,7 @@ class HypothesisA(LOTHypothesis):
         return 0     
 
 
-
-
-def create_hypothesis(h_type, grammar, data, lam_1, lam_2):
+def create_hypothesis(h_type, grammar, data, lam_1, lam_2, all_contexts):
     """
     Uses a grammar and a specified hypothesis type to create an object
     of the desired hypothesis class. This is used to be able to return
@@ -95,12 +117,13 @@ def create_hypothesis(h_type, grammar, data, lam_1, lam_2):
         - data (list): Data to pass in in order to compute degree of monotonicity
         - lam_1 (float): Lambda value [0,1] to give weight to degree of monotonicity
         - lam_2 (float): Lambda value [0,1] to give weight to degree of convexity
+        - all_contexts (float): For measuring degrees
 
     Returns:
         - (LOTLib3.Hypothesis): A hypothesis of the type specified with the grammar specified.
         - None: If the hypothesis specified does not exist yet (you must create it).
     """
     if h_type == "A":
-        return HypothesisA(grammar=grammar, data=data, lam_1=lam_1, lam_2=lam_2)
+        return HypothesisA(grammar=grammar, data=data, lam_1=lam_1, lam_2=lam_2, all_contexts=all_contexts)
     else:
         raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')
