@@ -5,8 +5,10 @@
 # Email: dj1121@uw.edu
 # -----------------------------------------------------------
 
+from data_handling import generate_possible_contexts
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from math import log
+import pandas as pd
 
 class HypothesisA(LOTHypothesis):
     """
@@ -28,10 +30,16 @@ class HypothesisA(LOTHypothesis):
         self.lam_1 = kwargs.get('lam_1', 0.0)
         self.lam_2 = kwargs.get('lam_2', 0.0)
 
-        if self.lam1 > 0:
+        if self.lam_1 > 0 or self.lam_2 > 0:
+            # Generate/load contexts for degrees of universality
+            generate_possible_contexts(['red', 'blue'], [3.0, 100.0], 8)
+            self.all_contexts = pd.read_csv("./../data/contexts.csv")
+            print(self.all_contexts)
+
+        if self.lam_1 > 0:
             self.degree_monotonicity = self.compute_degree_monotonicity()
         
-        if self.lam2 > 0:
+        if self.lam_2 > 0:
             self.degree_convexity = self.compute_degree_monotonicity()
         
     def __call__(self, *args):

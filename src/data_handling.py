@@ -18,7 +18,12 @@ from LOTlib3.DataAndObjects import FunctionData, Obj
     
 def generate_possible_contexts(colors, shapes, max_num_objects):
     """
-    Generate possible contexts
+    Generate possible contexts. Outputs to a csv file with the following code
+        - rt = red triangle
+        - bt = blue triangle
+        - rc = red circle
+        - bc = blue circle
+    Outputs to data folder
 
     Parameters:
         - colors (list (str)) List of unique color names as seen in data (i.e. ['red', 'blue'])
@@ -26,7 +31,7 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
         - max_num_objects (int) Maximum number of objects per context
 
     Returns:
-        - 
+        - None
     """
     contexts = []
 
@@ -34,24 +39,57 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
 
     # Generate A sets
     for i in range(0, max_num_objects + 1):
+
         c = list(combinations_with_replacement(colors, i)) # Generate all possible combos of length i and colors
         
         for j in range(0, len(c)): # List of tuples
-            curr_A_set = Multiset() # Construct a possible A set from current tuple
+            curr_A_set = [] # Construct a possible A set from current tuple
             curr_tuple = c[j]
 
             for k in range(0, len(curr_tuple)):
-                curr_A_set.add(Obj(color=curr_tuple[k], shape=3.0))
+                if curr_tuple[k] == "blue":
+                    curr_A_set.append("bt") # Blue triangle
+                elif curr_tuple[k] == "red":
+                    curr_A_set.append("rt") # Red triangle
 
             A_B_possible.append((curr_A_set, []))
     
-    # Generate B sets
-    print(A_B_possible)
+    # Given each A set, generate possible B sets
+    for tup in A_B_possible:
 
-    
+        # Get details of current set
+        curr_A_set = tup[0]
+        n_red_triangles = 0
+        n_blue_triangles = 0
+        for obj_name in curr_A_set:
+            if "b" in obj_name:
+                n_blue_triangles += 1
+            else:
+                n_red_triangles += 1
 
-                
+        # Generate all B sets corresponding to this A set (adding same num red triangles, then red circles)
+        for i in range(0, max_num_objects - n_blue_triangles - n_red_triangles + 1):
+            possible_B_set = []
+            for j in range(0, n_red_triangles):
+                possible_B_set.append("rt")
+            for k in range(0,i):
+                possible_B_set.append("rc")
+            tup[1].append(possible_B_set)
 
+    # Build contexts from A/B possible sets
+    for tup in A_B_possible:
+        a_set = tup[0]
+        for b_set in tup[1]:
+            contexts.append((a_set,b_set))
+
+    # Output to csv file
+    with open("./../data/" + "contexts.csv", "w") as f:
+        f.write("set_A,set_B\n")
+        for context in contexts:
+            a = str(context[0]).replace(",", ";").replace("[","").replace("]","").replace("'", "").replace(" ", "")
+            b = str(context[1]).replace(",", ";").replace("[","").replace("]","").replace("'", "").replace(" ", "")
+            f.write(a + "," + b + "\n")
+ 
 def load(data_dir, alpha):
     """
     Loads and returns training data for the model (contexts -> labels).
@@ -119,6 +157,3 @@ def load(data_dir, alpha):
             data.append(FunctionData(input=[set_A, set_B], output=label, alpha=alpha))
 
     return data, n_contexts
-
-
-generate_possible_contexts(['red', 'blue'], [3.0, 100.0], 8)
