@@ -22,6 +22,8 @@ import visualize
 # LOTLib
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
+from LOTlib3.DataAndObjects import FunctionData, Obj
+from multiset import *
 
 TIME = time.strftime("%Y%m%d-%H%M%S")
 
@@ -187,9 +189,17 @@ if __name__ == "__main__":
     lam_1 = args.lam_1
     lam_2 = args.lam_2
 
-    # Select a starting hypothesis and train
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2, all_contexts)
-    train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
-    # Plot outputs
-    plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
+
+
+    contexts_test = [FunctionData(input=[Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)]), Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0), Obj(color='red', shape=100.0)])], output=None),
+                     FunctionData(input=[Multiset(), Multiset()], output=None),
+                     FunctionData(input=[Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)]), Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)])], output=None)]
+    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, contexts_test)
+
+    # Select a starting hypothesis and train
+    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2, all_contexts)
+    # train(data, h0, n_contexts, args.out, exp_id, sample_steps)
+
+    # # Plot outputs
+    # plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
