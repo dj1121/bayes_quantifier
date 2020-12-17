@@ -54,6 +54,13 @@ def create_grammar(g_type):
         grammar.add_rule('SET', 'B', None, 5)
         
         return grammar
+    
+    elif g_type == "error_testing":
+        grammar = Grammar(start='BOOL')
+        grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1) # subset_(B,A) returns if B subset of A
+        grammar.add_rule('SET', 'A', None, 5)
+        grammar.add_rule('SET', 'B', None, 5)
+        return grammar
 
     else:
         raise Exception("There exists no g_type \'" + g_type + '\'. To see possible grammar types, refer to grammars.py.')

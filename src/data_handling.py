@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import re
 
 # LOTLib3
-from LOTlib3.DataAndObjects import FunctionData, Obj
+from LOTlib3.DataAndObjects import FunctionData
 
     
 def generate_possible_contexts(colors, shapes, max_num_objects):
@@ -49,9 +49,9 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
 
             for k in range(0, len(curr_tuple)):
                 if curr_tuple[k] == "blue":
-                    curr_A_set.add(Obj(color="blue", shape=3.0)) # Blue triangle
+                    curr_A_set.add("blue_3") # Blue triangle
                 elif curr_tuple[k] == "red":
-                    curr_A_set.add(Obj(color="red", shape=3.0)) # Red triangle
+                    curr_A_set.add("red_3") # Red triangle
 
             A_B_possible.append((curr_A_set, []))
     
@@ -63,7 +63,7 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
         n_red_triangles = 0
         n_blue_triangles = 0
         for obj in curr_A_set:
-            if obj.color == "blue":
+            if "blue" in obj:
                 n_blue_triangles += 1
             else:
                 n_red_triangles += 1
@@ -72,9 +72,9 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
         for i in range(0, max_num_objects - n_blue_triangles - n_red_triangles + 1):
             possible_B_set = Multiset()
             for j in range(0, n_red_triangles):
-                possible_B_set.add(Obj(color="red", shape=3.0))
+                possible_B_set.add("red_3")
             for k in range(0,i):
-                possible_B_set.add(Obj(color="red", shape=100.0))
+                possible_B_set.add("red_100")
             tup[1].append(possible_B_set)
 
     # Build contexts from A/B possible sets
@@ -90,16 +90,12 @@ def generate_possible_contexts(colors, shapes, max_num_objects):
             i = context.input
             a = str(i[0])
             a = re.sub(r'OBJECT|<|{|}|<|>|:| |,|', '', a)
-            a = re.sub(r'color=red', 'red_', a)
-            a = re.sub(r'color=blue', 'blue_', a)
-            a = re.sub(r'shape=3.0', '3;', a)
-            a = re.sub(r'shape=100.0', '100;', a)
+            a = re.sub(r'3', '3;', a)
+            a = re.sub(r'100', '100;', a)
             b = str(i[1])
             b = re.sub(r'OBJECT|<|{|}|<|>|:| |,|', '', b)
-            b = re.sub(r'color=red', 'red_', b)
-            b = re.sub(r'color=blue', 'blue_', b)
-            b = re.sub(r'shape=3.0', '3;', b)
-            b = re.sub(r'shape=100.0', '100;', b)
+            b = re.sub(r'3', '3;', b)
+            b = re.sub(r'100', '100;', b)
             f.write(a + "," + b + "\n")
     
     return contexts
@@ -149,22 +145,22 @@ def load(data_dir, alpha):
             shape_num = 0
             for col in df:
                 if "obj" in col:
-                    context_objects.append(Obj(color=row[col], shape=None))
+                    context_objects.append(row[col])
                 elif "corrAns" in col:
                     label = (row[col] == "t")
                 elif "shape" in col:
-                    context_objects[shape_num].shape = row[col]
+                    context_objects[shape_num] = context_objects[shape_num] + "_" + str(int(row[col]))
                     shape_num += 1
                 else:
                     continue
             
             # Split objects into appropriate sets
             for o in context_objects:
-                if o.color == 'gray':
+                if 'gray' in o:
                     continue
-                if o.shape == 3.0:
+                if "3" in o:
                     set_A.add(o)
-                if o.color == 'red':
+                if 'red' in o:
                     set_B.add(o)
 
             # Add this context/label to dataset

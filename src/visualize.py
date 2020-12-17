@@ -1,9 +1,16 @@
 # -----------------------------------------------------------
-# Functions for  visualizing results.
+# Functions for visualizing results.
 #
 # 2020 Devin Johnson, University of Washington Linguistics
 # Email: dj1121@uw.edu
 # -----------------------------------------------------------
+
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+import seaborn as sns
+import numpy as np
+
 def h_acc(data_dir):
     """
     Calculates human accuracies from each of the human data files in the data_dir.
@@ -92,7 +99,7 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
         - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
         - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
         - exp_id (str): Identifier for this experiment run
-        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
+        - exp_type (str): What kind of quantifier is being run
 
     Returns:
         - None
@@ -105,8 +112,6 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
     # Append data frames to model_probs
     for f_name in os.listdir(out + exp_id):
         path = out + exp_id + "/" + f_name
-        if "_prob_" not in path:
-            continue
         dfs.append(pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|"))
      
     # Data frame that finds max hypothesis/prob pair per each row over all models
@@ -122,7 +127,7 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Posterior Probability (Log)", fontsize=12)
-    plt.title("Best Posterior Score Per Data Seen \n(" + exp_type + ")")
+    plt.title("Best Posterior Score Per Data Seen \n(" + exp_id + ")")
     # Print the concept out for every 12th concept
     style = dict(size=7, color='gray')
     for i in range(0, len(model_probs), 11):
@@ -133,7 +138,7 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
 def plt_hm_acc(data_dir, out, exp_id, exp_type):
     """
     Plots the average human accuracy and average model accuracy per data seen.
-    Saves a .png file of plot in experimental results folder. If avg_acc=False
+    Saves a .png file of plot in experimental results folder.
 
     Parameters:
         - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
@@ -149,8 +154,6 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
 
     for f_name in os.listdir(out + exp_id):
         path = out + exp_id + "/" + f_name
-        if "_acc_" not in path:
-            continue
         df = pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|")
         model_accuracies.append(df['acc'])
 

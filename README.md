@@ -22,7 +22,7 @@ To test out the program for yourself on some sample data ("at least 2" quantifie
 Note, the results you'll get will most probably be gibberish, since the sample data itself follows no consistent patterns. The sample data is only to 
 understand how the program works. To run a custom experiment, the program can be specified on the command line as follows (from inside the src folder):
 
-`python run_experiment.py [exp_type] -data_dir [data_dir] -out [out] -g_type [g_type] -h_type [h_type] -sample_steps [sample_steps] -alpha [alpha]`
+`python run_experiment.py [exp_type] -data_dir [data_dir] -out [out] -g_type [g_type] -h_type [h_type] -sample_steps [sample_steps] -alpha [alpha] -lam_1 [lam_1] -lam_2[lam_2]`
 
 The parameters serve the following functions:
 
@@ -33,7 +33,8 @@ The parameters serve the following functions:
 - h_type (default = A): What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py
 - sample_steps (default = 5000): How many steps to run the metropolis-hasting sampler
 - alpha (default = 0.99): Assumed noisiness of data (min = 1.0)
-- lam (default = 0.0) How much weight to give to degree of universality
+- lam_1 (default = 0.0): How much weight to give to degree of monotonicity
+- lam_2 (default = 0.0): How much weight to give to degree of convexity
 
 NOTE: The data directory (data_dir) only points to where your experimental data files are located. Experimental data MUST be further divided into folders based
 upon experiment. The exp_type argument is then used to find the correct folder of data inside the data_dir. In sum, your data file structure, given multiple experiment types,
@@ -124,45 +125,11 @@ This grammar assumes hypotheses will be defined over two sets and applies unifor
 ## Analyzing Results
 By default, this program outputs .csv results files and three learning curves indicating model/human performance. Since human data is confidential, sample human data is provided. The model learns from the same experimental contexts that humans see. Output files are stored by default in results/exp_id/, a folder which is created in the main directory of the program.
 
-Output files are named according to the date, time, and result type. For example, if a quantifier ("at least 2") learning experiment was run on September 14th, 2020 at 10:53:14 and the results file names woudld start with:
+Output files are named according to the time, quantifier, and lambda values. For example, if a quantifier ("at least 2") learning experiment was run on December 17th at a minute and second (say 1:18) with lam_1 =0.0 and lam_2 = 0.0, the results file names would start with:
 
-`20200914-105314_at_most_2_`
+`12170118_at_most_2_0.0_0.0_`
 
-### _acc Files
-Files ending in `_acc` store the accuracy results of a learning model. Each line shows the top hypothesis (most probable) per amount of data seen (line 1 = one data point, line 30 = thirty data points, etc.) and the accuracy of running that hypothesis over all the data currently seen. Since there are as many models as there are humans, there may be multiple `_acc` files like:
-```
-20200914-105314_at_most_2_acc_1.csv
-20200914-105314_at_most_2_acc_2.csv
-...
-```
-
-Some example lines:
-
-```
-hypothesis|acc
-lambda A, B: issubset_(B, A)|1.0
-lambda A, B: issubset_(A, A)|1.0
-```
-
-This means that after seeing one data point (first line), the model guesses that the concept is `lambda A, B: issubset_(B, A)` and after running this hypothesis over all the data points, it evaluated to true on all. Thus, the accuracy is 1.0.
-
-
-
-### _prob Files
-Files ending in `_prob` store the (log) posterior probabilities of the learning model. Each line also shows the top hypothesis (most probable) per amount of data seen and its posterior probability. Since there are as many models as there are humans, there may be multiple `_prob` files like:
-```
-20200914-105314_at_most_2_prob_1.csv
-20200914-105314_at_most_2_prob_2.csv
-...
-``` 
-Example lines:
-```
-hypothesis|post_prob
-lambda A, B: issuper_(A, B)|-3.7128326951364294
-lambda A, B: equal_(B, B)|-3.7228830309899306
-```
-
-Naturally, we would expect these (log) probabilities to decrease over time as we converge to better hypotheses by having seen more data points.
+Results are shown with accuracy of the currently sampled hypothesis (as evaluated on all data seen so far) and its posterior probability (log).
 
 ### Learning Curves
 In the results folder, by default for each experiment, one can also find the following learning curves:

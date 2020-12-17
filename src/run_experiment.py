@@ -9,8 +9,8 @@
 # Python Imports
 import os
 import argparse
-import time
 from math import log
+import time
 
 # Personal Code
 import primitives
@@ -22,10 +22,10 @@ import visualize
 # LOTLib
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
-from LOTlib3.DataAndObjects import FunctionData, Obj
+from LOTlib3.DataAndObjects import FunctionData
 from multiset import *
 
-TIME = time.strftime("%Y%m%d-%H%M%S")
+TIME = time.strftime("%m%d%M%S")
 
 def parse_args():
     """
@@ -80,10 +80,9 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     TN = TopN(N=1)
 
     # Record top N concept(s) with top posterior probability over this data/steps
-    with open(args.out + exp_id + "/" + exp_id + "_prob_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
+    with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
             # Check if it's a trivial hypothesis and if so, skip it
-            # TODO: Keep this feature or remove?
             if len(h.value.args) > 1:
                 skip = True
                 for i in range(1, len(h.value.args)):
@@ -96,19 +95,19 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
             TN.add(h)
         # Output
         for h in TN.get_all(sorted=True):
-            f.write(str(h) + "|" + str(h.posterior_score) + "\n")
+            f.write(str(h) + "|" + str(h.posterior_score))
         f.close()
     
     # With best concept, record accuracy over all data provided
-    with open(args.out + exp_id + "/" + exp_id + "_acc_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
+    with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         total = len(data)
         num_correct = 0
         for h in TN.get_all(sorted=True):
             for datum in data:
                 # If the model guesses the right training label
-                if h.eval(datum):
+                if h.eval_q_m(datum) == datum.output:
                     num_correct += 1
-            f.write(str(h) + "|" + str(float(num_correct/total)) + "\n")
+            f.write("|" + str(float(num_correct/total)) + "\n")
         f.close()
 
 def plot(data, out, exp_id, exp_type):
@@ -155,10 +154,8 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
     # Inference over of data seen so far by given model (mimicking humans seeing contexts in succession)
     for i in range(0, len(data_split)):
         # Create headings of output CSV
-        with open(out + exp_id + "/" + exp_id + "_prob_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
-            f.write("hypothesis|post_prob\n")
-        with open(out + exp_id + "/" + exp_id + "_acc_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
-            f.write("hypothesis|acc\n")
+        with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
+            f.write("hypothesis|post_prob|acc\n")
 
         model_i_data = data_split[i]
         print("Training Model:", i + 1, "of", len(data_split))
@@ -172,10 +169,12 @@ if __name__ == "__main__":
     args = parse_args()
     
     # Make results folder
+    lam_1 = args.lam_1
+    lam_2 = args.lam_2
     if not os.path.exists(args.out): 
         os.makedirs(args.out)
     data_path = args.data_dir + "/" + args.exp_type + "/"
-    exp_id = TIME + "_" + args.exp_type
+    exp_id = TIME + "_" + args.exp_type + "_" + str(lam_1) + "_" + str(lam_2)
     os.mkdir(args.out + exp_id + "/")
 
     # Load all possible contexts (for degrees of univ.)
@@ -185,20 +184,15 @@ if __name__ == "__main__":
     # Load data, create grammar
     data, n_contexts = data_handling.load(data_path, args.alpha)
     grammar = grammars.create_grammar(args.g_type)
-    sample_steps = args.sample_steps  
-    lam_1 = args.lam_1
-    lam_2 = args.lam_2
+    sample_steps = args.sample_steps
 
-
-
-
-    contexts_test = [FunctionData(input=[Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)]), Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0), Obj(color='red', shape=100.0)])], output=None),
+    contexts_test = [FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3", "red_100"])], output=None),
                      FunctionData(input=[Multiset(), Multiset()], output=None),
-                     FunctionData(input=[Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)]), Multiset([Obj(color='red', shape=3.0),Obj(color='red', shape=3.0)])], output=None)]
-    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, contexts_test)
+                     FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3"])], output=None)]
+    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
 
-    # Select a starting hypothesis and train
-    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, data, lam_1, lam_2, all_contexts)
+    # # Select a starting hypothesis and train
+    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
     # train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
     # # Plot outputs

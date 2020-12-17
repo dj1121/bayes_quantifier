@@ -134,7 +134,7 @@ class HypothesisA(LOTHypothesis):
         probs = {'M_t': float(counts['M_t']/len(self.all_contexts)),
                   'M_f': float(counts['M_f']/len(self.all_contexts)),
                   'sub_t': float(counts['sub_t']/len(self.all_contexts)),
-                  'sub_f': float(counts['sub_t']/len(self.all_contexts)),
+                  'sub_f': float(counts['sub_f']/len(self.all_contexts)),
                   'super_t': float(counts['super_t']/len(self.all_contexts)),
                   'super_f': float(counts['super_f']/len(self.all_contexts)),
                   'M_t_sub_t': float(counts['M_t_sub_t']/len(self.all_contexts)),
@@ -165,7 +165,6 @@ class HypothesisA(LOTHypothesis):
     
     def super_q_m(self, m):
         """
-        TODO: Check if subsets should be \subseteq??
         Find if the hypothesis evaluates to true in any of the supermodels of the given model (context) m.
         A supermodel is defined to be two sets A'and B' such that A = A' and B \subseteq B'
         
@@ -178,8 +177,6 @@ class HypothesisA(LOTHypothesis):
         """
         # Iterate over models
         for context in self.all_contexts:
-            # if context == m: # Skip itself?
-            #     continue
             curr_B_set = context.input[1]
             m_B_set = m.input[1]
             if m_B_set.issubset(curr_B_set) and self.eval_q_m(context):
@@ -188,7 +185,6 @@ class HypothesisA(LOTHypothesis):
 
     def sub_q_m(self, m):
         """
-        TODO: Check if subsets should be \subseteq??
         Find if the hypothesis evaluates to true in any of the submodels of the given model (context) m.
         A submodel is defined to be two sets A'and B' such that A = A' and B' \subseteq B
         
@@ -201,8 +197,6 @@ class HypothesisA(LOTHypothesis):
         """
         # Iterate over models
         for context in self.all_contexts:
-            # if context == m: # Skip itself
-            #     continue
             curr_B_set = context.input[1]
             m_B_set = m.input[1]
             if curr_B_set.issubset(m_B_set) and self.eval_q_m(context):
@@ -212,6 +206,7 @@ class HypothesisA(LOTHypothesis):
     def compute_prior(self):
         """
         Overriden prior computation to allow for degrees of monotonicity and convexity.
+        NOTE: The super function computes a log probability. Thus, we can add the degrees.
         """
         return super().compute_prior() + (self.lam_1 * self.degree_monotonicity) + (self.lam_2 * self.degree_monotonicity)
 
@@ -228,24 +223,26 @@ class HypothesisA(LOTHypothesis):
             if val == 0:
                 return 0
             return log(val)
+        
+        k = 0.0001 # Smoothing for denominators
 
         # Get H(1Q)
-        h_1_q = (self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * log(self.probs['M_f']))
+        h_1_q = (self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f']))
 
         # Get H(1Q | 1Q<)
-        h_1_q_sub = (self.probs['M_t_sub_t'] * smooth_log(self.probs['M_t_sub_t']/self.probs['sub_t'])) +\
-                    (self.probs['M_t_sub_f'] * smooth_log(self.probs['M_t_sub_f']/self.probs['sub_f'])) +\
-                    (self.probs['M_f_sub_t'] * smooth_log(self.probs['M_f_sub_t']/self.probs['sub_t'])) +\
-                    (self.probs['M_f_sub_f'] * smooth_log(self.probs['M_f_sub_f']/self.probs['sub_f']))
+        h_1_q_sub = (self.probs['M_t_sub_t'] * smooth_log(self.probs['M_t_sub_t'] / (self.probs['sub_t'] + k))) +\
+                    (self.probs['M_t_sub_f'] * smooth_log(self.probs['M_t_sub_f'] / (self.probs['sub_f'] + k))) +\
+                    (self.probs['M_f_sub_t'] * smooth_log(self.probs['M_f_sub_t'] / (self.probs['sub_t'] + k))) +\
+                    (self.probs['M_f_sub_f'] * smooth_log(self.probs['M_f_sub_f'] / (self.probs['sub_f'] + k)))
 
         # Get H(1Q | 1Q>)
-        h_1_q_super = (self.probs['M_t_super_t'] * smooth_log(self.probs['M_t_super_t']/self.probs['super_t'])) +\
-                    (self.probs['M_t_super_f'] * smooth_log(self.probs['M_t_super_f']/self.probs['super_f'])) +\
-                    (self.probs['M_f_super_t'] * smooth_log(self.probs['M_f_super_t']/self.probs['super_t'])) +\
-                    (self.probs['M_f_super_f'] * smooth_log(self.probs['M_f_super_f']/self.probs['super_f']))
+        h_1_q_super = (self.probs['M_t_super_t'] * smooth_log(self.probs['M_t_super_t'] / (self.probs['super_t'] + k) )) +\
+                    (self.probs['M_t_super_f'] * smooth_log(self.probs['M_t_super_f'] / (self.probs['super_f'] + k))) +\
+                    (self.probs['M_f_super_t'] * smooth_log(self.probs['M_f_super_t'] / (self.probs['super_t'] + k))) +\
+                    (self.probs['M_f_super_f'] * smooth_log(self.probs['M_f_super_f'] / (self.probs['super_f'] + k)))
         
-        up_degree = float((1-h_1_q_sub) / h_1_q)
-        down_degree = float((1-h_1_q_super) / h_1_q)
+        up_degree = float(1 - (h_1_q_sub / (h_1_q + k)))
+        down_degree = float(1 - (h_1_q_super / (h_1_q + k)))
 
         return (up_degree + down_degree) / 2
 
