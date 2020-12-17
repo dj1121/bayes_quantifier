@@ -252,7 +252,6 @@ class HypothesisA(LOTHypothesis):
         """
         return 0     
 
-
 def create_hypothesis(h_type, grammar, lam_1, lam_2, all_contexts):
     """
     Uses a grammar and a specified hypothesis type to create an object

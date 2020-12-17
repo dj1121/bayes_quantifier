@@ -186,14 +186,14 @@ if __name__ == "__main__":
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps
 
-    contexts_test = [FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3", "red_100"])], output=None),
-                     FunctionData(input=[Multiset(), Multiset()], output=None),
-                     FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3"])], output=None)]
-    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
+    # contexts_test = [FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3", "red_100"])], output=None),
+    #                  FunctionData(input=[Multiset(), Multiset()], output=None),
+    #                  FunctionData(input=[Multiset(["red_3", "red_3"]), Multiset(["red_3", "red_3"])], output=None)]
+    # test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
 
-    # # Select a starting hypothesis and train
-    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
-    # train(data, h0, n_contexts, args.out, exp_id, sample_steps)
+    # Select a starting hypothesis and train
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
+    train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
-    # # Plot outputs
-    # plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
+    # Plot outputs
+    plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
