@@ -209,4 +209,4 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
         # plt.show()
         plt.savefig(out + exp_id + "/" + exp_id + '_acc' + str(i+1) + '.png', dpi=400)
 
-plt_hm_acc("./../data/first_3/", "./../results/", exp_id="12183848_first_3_0.0_0.0", exp_type="first_3")
+# plt_hm_acc("./../data/first_3/", "./../results/", exp_id="12183848_first_3_0.0_0.0", exp_type="first_3")
