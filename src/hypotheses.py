@@ -13,12 +13,12 @@ class HypothesisA(LOTHypothesis):
     """
     A hypothesis type which assumes two sets and a simple likelihood function
     as seen in Goodman et al. 2010. Also incporates degrees of monotonicity 
-    and convexity.
+    and conservativity.
     """
 
     # Class attributes
     degree_monotonicity = 0
-    degree_convexity = 0
+    degree_conservativity = 0
     lam_1 = 0
     lam_2 = 0
     all_contexts = None
@@ -38,7 +38,7 @@ class HypothesisA(LOTHypothesis):
             self.degree_monotonicity = self.compute_degree_monotonicity()
         
         if self.lam_2 > 0:
-            self.degree_convexity = self.compute_degree_monotonicity()
+            self.degree_conservativity = self.compute_degree_conservativity()
         
     def __call__(self, *args):
         try:
@@ -205,10 +205,19 @@ class HypothesisA(LOTHypothesis):
 
     def compute_prior(self):
         """
-        Overriden prior computation to allow for degrees of monotonicity and convexity.
-        NOTE: The super function computes a log probability. Thus, we can add the degrees.
+        Overriden prior computation to allow for degrees of monotonicity and conservativity.
+        NOTE: The super function computes a negative log probability. Thus, we can add the degrees.
         """
-        return super().compute_prior() + (self.lam_1 * self.degree_monotonicity) + (self.lam_2 * self.degree_monotonicity)
+
+        def smooth_log(val):
+            """
+            Returns 0 if value is zero, otherwise returns log of value 
+            """
+            if val == 0:
+                return 0
+            return log(val)
+
+        return super().compute_prior() + (self.lam_1 * -smooth_log(self.degree_monotonicity)) + (self.lam_2 * -smooth_log(self.degree_conservativity))
 
     def compute_degree_monotonicity(self):
         """
@@ -246,9 +255,9 @@ class HypothesisA(LOTHypothesis):
 
         return (up_degree + down_degree) / 2
 
-    def compute_degree_convexity(self):
+    def compute_degree_conservativity(self):
         """
-        Compute degree of convexity
+        Compute degree of conservativity
         """
         return 0     
 
@@ -265,7 +274,7 @@ def create_hypothesis(h_type, grammar, lam_1, lam_2, all_contexts):
         - grammar (LOTLib3.Grammar): A grammar with which possible hypotheses of the type passed in will
         be generated
         - lam_1 (float): Lambda value [0,1] to give weight to degree of monotonicity
-        - lam_2 (float): Lambda value [0,1] to give weight to degree of convexity
+        - lam_2 (float): Lambda value [0,1] to give weight to degree of conservativity
         - all_contexts (float): For measuring degrees
 
     Returns:

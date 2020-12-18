@@ -111,8 +111,10 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
 
     # Append data frames to model_probs
     for f_name in os.listdir(out + exp_id):
+        if ".png" in f_name:
+            continue
         path = out + exp_id + "/" + f_name
-        dfs.append(pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|"))
+        dfs.append(pd.read_csv(path, sep="|"))
      
     # Data frame that finds max hypothesis/prob pair per each row over all models
     df = pd.concat(dfs).min(level=0)
@@ -128,10 +130,10 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
     plt.xticks(np.arange(0, 100, 12))
     plt.ylabel("Posterior Probability (Log)", fontsize=12)
     plt.title("Best Posterior Score Per Data Seen \n(" + exp_id + ")")
-    # Print the concept out for every 12th concept
-    style = dict(size=7, color='gray')
-    for i in range(0, len(model_probs), 11):
-        plt.text(i, model_probs[i], hypotheses[i], **style)
+    # # Print the concept out for every 12th concept
+    # style = dict(size=7, color='gray')
+    # for i in range(0, len(model_probs), 11):
+    #     plt.text(i, model_probs[i], hypotheses[i], **style)
     # plt.show()
     plt.savefig(out + exp_id + "/" + exp_id +'_prob.png', dpi=400)
 
@@ -153,8 +155,10 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     model_accuracies = []
 
     for f_name in os.listdir(out + exp_id):
+        if ".png" in f_name:
+            continue
         path = out + exp_id + "/" + f_name
-        df = pd.read_csv(open(path, 'r', encoding="utf-8"), sep="|")
+        df = pd.read_csv(path, sep="|")
         model_accuracies.append(df['acc'])
 
     model_accuracies = np.array(model_accuracies)
@@ -175,10 +179,10 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
-    plt.yticks((np.arange(0, 1, 0.1)))
+    plt.yticks((np.arange(0, 1.1, 0.1)))
     plt.ylabel("Accuracy", fontsize=12)
-    plt.title("Human and Model Accuracy Over Data Seen \n(" + exp_type + ")")
-    plt.legend(['Average Model Accuracy', 'Average Human Accuracy'])
+    plt.title("Avg. Human and Model Accuracy Over Data Seen \n(" + exp_id + ")")
+    plt.legend(["Average Human Accuracy " + "n=" + str(len(human_accuracies)), 'Average Model Accuracy ' + "n=" + str(len(model_accuracies))])
 
     # plt.show()
     plt.savefig(out + exp_id + "/" + exp_id + '_acc.png', dpi=400)
@@ -199,8 +203,10 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
         plt.xticks(np.arange(0, 100, 12))
         plt.yticks((np.arange(0, 1.1, 0.1)))
         plt.ylabel("Accuracy", fontsize=12)
-        plt.title("Human and Model Accuracy Over Data Seen, " + "Model/Human # " + str(i+1) +  "\n(" + exp_type + ")")
-        plt.legend(['Model Accuracy', 'Human Accuracy'])
+        plt.title("Human and Model Accuracy Over Data Seen, " + "Model/Human # " + str(i+1) +  "\n(" + exp_id + ")")
+        plt.legend(['Human Accuracy', 'Model Accuracy'])
 
         # plt.show()
         plt.savefig(out + exp_id + "/" + exp_id + '_acc' + str(i+1) + '.png', dpi=400)
+
+plt_hm_acc("./../data/first_3/", "./../results/", exp_id="12183848_first_3_0.0_0.0", exp_type="first_3")
