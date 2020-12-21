@@ -6,6 +6,7 @@
 # -----------------------------------------------------------
 
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
+from LOTlib3.DataAndObjects import FunctionData
 from math import log
 from os import path
 
@@ -73,6 +74,8 @@ class HypothesisA(LOTHypothesis):
                   'sub_f': 0,
                   'super_t': 0,
                   'super_f': 0,
+                  'cons_t': 0,
+                  'cons_f': 0,
                   'M_t_sub_t': 0,
                   'M_t_sub_f': 0,
                   'M_f_sub_t': 0,
@@ -80,7 +83,12 @@ class HypothesisA(LOTHypothesis):
                   'M_t_super_t': 0,
                   'M_t_super_f': 0,
                   'M_f_super_t': 0,
-                  'M_f_super_f': 0}       
+                  'M_f_super_f': 0,
+                  'M_t_cons_t': 0,
+                  'M_t_cons_f': 0,
+                  'M_f_cons_t': 0,
+                  'M_f_cons_f': 0 
+                  }       
 
         # Iterate over all contexts get counts
         for context in self.all_contexts:
@@ -110,6 +118,15 @@ class HypothesisA(LOTHypothesis):
             else:
                 counts['super_f'] += 1
                 curr_super_truth = False
+            
+            # Cons T/F for curr context
+            curr_cons_truth = None
+            if self.cons_q_m(context):
+                counts['cons_t'] += 1
+                curr_super_truth = True
+            else:
+                counts['cons_f'] += 1
+                curr_super_truth = False
 
             # TT, TF, FT, FF for curr and submodels
             if curr_truth and curr_sub_truth:
@@ -130,6 +147,16 @@ class HypothesisA(LOTHypothesis):
                 counts['M_f_super_t'] += 1
             elif not curr_truth and not curr_super_truth:
                 counts['M_f_super_f'] += 1
+
+            # TT, TF, FT, FF for curr and cons model
+            if curr_truth and curr_cons_truth:
+                counts['M_t_cons_t'] += 1
+            elif curr_truth and not curr_cons_truth:
+                counts['M_t_cons_f'] += 1
+            elif not curr_truth and curr_cons_truth:
+                counts['M_f_cons_t'] += 1
+            elif not curr_truth and not curr_cons_truth:
+                counts['M_f_cons_f'] += 1
             
         probs = {'M_t': float(counts['M_t']/len(self.all_contexts)),
                   'M_f': float(counts['M_f']/len(self.all_contexts)),
@@ -137,6 +164,8 @@ class HypothesisA(LOTHypothesis):
                   'sub_f': float(counts['sub_f']/len(self.all_contexts)),
                   'super_t': float(counts['super_t']/len(self.all_contexts)),
                   'super_f': float(counts['super_f']/len(self.all_contexts)),
+                  'cons_t': float(counts['cons_t']/len(self.all_contexts)),
+                  'cons_f': float(counts['cons_f']/len(self.all_contexts)),
                   'M_t_sub_t': float(counts['M_t_sub_t']/len(self.all_contexts)),
                   'M_t_sub_f': float(counts['M_t_sub_f']/len(self.all_contexts)),
                   'M_f_sub_t': float(counts['M_f_sub_t']/len(self.all_contexts)),
@@ -144,7 +173,11 @@ class HypothesisA(LOTHypothesis):
                   'M_t_super_t': float(counts['M_t_super_t']/len(self.all_contexts)),
                   'M_t_super_f': float(counts['M_t_super_f']/len(self.all_contexts)),
                   'M_f_super_t': float(counts['M_f_super_t']/len(self.all_contexts)),
-                  'M_f_super_f': float(counts['M_f_super_f']/len(self.all_contexts))}
+                  'M_f_super_f': float(counts['M_f_super_f']/len(self.all_contexts)),
+                  'M_t_cons_t': float(counts['M_t_cons_t']/len(self.all_contexts)),
+                  'M_t_cons_f': float(counts['M_t_cons_f']/len(self.all_contexts)),
+                  'M_f_cons_t': float(counts['M_f_cons_t']/len(self.all_contexts)),
+                  'M_f_cons_f': float(counts['M_f_cons_f']/len(self.all_contexts))}
         
         return probs
 
@@ -203,10 +236,26 @@ class HypothesisA(LOTHypothesis):
                 return True
         return False
 
+    def cons_q_m(self, m):
+        """
+        Find if the hypothesis evaluates to true its conservation, where B' = A \cap B
+        
+        Parameters:
+            - self
+            - m (List of multisets): A given context (data input)
+
+        Returns:
+            - True if there exists a conservation model m' where the hypothesis evaluates to true    
+        """
+        # A' = A and B' = A \cap B
+        conservation_model = FunctionData(input=[m.input[0], m.input[0].intersection(m.input[1])], output=None)
+        
+        return self.eval_q_m(conservation_model)
+
     def compute_prior(self):
         """
         Overriden prior computation to allow for degrees of monotonicity and conservativity.
-        NOTE: The super function computes a negative log probability. Thus, we can add the degrees.
+        NOTE: The super function computes a log probability. Thus, we can add the degrees.
         """
 
         def smooth_log(val):
@@ -222,7 +271,7 @@ class HypothesisA(LOTHypothesis):
     def compute_degree_monotonicity(self):
         """
         Compute degree of monotonicity, similar to that seen in Posdijk
-        Takes an average of the upward monotonicity measure and downward
+        Takes the max of the upward monotonicity measure and downward
         """
 
         def smooth_log(val):
@@ -253,13 +302,35 @@ class HypothesisA(LOTHypothesis):
         up_degree = float(1 - (h_1_q_sub / (h_1_q + k)))
         down_degree = float(1 - (h_1_q_super / (h_1_q + k)))
 
-        return (up_degree + down_degree) / 2
+        return max(up_degree, down_degree)
 
     def compute_degree_conservativity(self):
         """
-        Compute degree of conservativity
+        Compute degree of conservativity, evaluate truth in <M, A, A \cap B>
+        i.e. B' = A \cap B
         """
-        return 0     
+        def smooth_log(val):
+            """
+            This is the nested function to deal with log(0) when a probability is = 0
+            """
+            if val == 0:
+                return 0
+            return log(val)
+        
+        k = 0.0001 # Smoothing for denominators
+
+        # Get H(1Q)
+        h_1_q = (self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f']))
+
+        # Get H(1Q | 1Q con)
+        h_1_q_cons = (self.probs['M_t_cons_t'] * smooth_log(self.probs['M_t_cons_t'] / (self.probs['cons_t'] + k))) +\
+                    (self.probs['M_t_cons_f'] * smooth_log(self.probs['M_t_cons_f'] / (self.probs['cons_f'] + k))) +\
+                    (self.probs['M_f_cons_t'] * smooth_log(self.probs['M_f_cons_t'] / (self.probs['cons_t'] + k))) +\
+                    (self.probs['M_f_cons_f'] * smooth_log(self.probs['M_f_cons_f'] / (self.probs['cons_f'] + k)))
+        
+        degree_cons = float(1 - (h_1_q_cons / (h_1_q + k)))
+
+        return degree_cons
 
 def create_hypothesis(h_type, grammar, lam_1, lam_2, all_contexts):
     """
