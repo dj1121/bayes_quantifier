@@ -22,7 +22,7 @@ import visualize
 # LOTLib
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
-from LOTlib3.DataAndObjects import FunctionData
+from LOTlib3.DataAndObjects import FunctionData, Obj
 from multiset import *
 
 TIME = time.strftime("%m%d%M%S")
@@ -186,7 +186,10 @@ if __name__ == "__main__":
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps
 
-    # test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, data)
+    # # For bug testing purposes
+    # contexts_test = [FunctionData(input=[Multiset(['red_t', 'red_t']), Multiset(["red_t", "red_t", "red_c"])], output=None),
+    #                  FunctionData(input=[Multiset([]),Multiset([])], output=None)]
+    # test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
 
     # Select a starting hypothesis and train
     h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
