@@ -34,7 +34,7 @@ The parameters serve the following functions:
 - sample_steps (default = 5000): How many steps to run the metropolis-hasting sampler
 - alpha (default = 0.99): Assumed noisiness of data (min = 1.0)
 - lam_1 (default = 0.0): How much weight to give to degree of monotonicity
-- lam_2 (default = 0.0): How much weight to give to degree of convexity
+- lam_2 (default = 0.0): How much weight to give to degree of conservativity
 
 NOTE: The data directory (data_dir) only points to where your experimental data files are located. Experimental data MUST be further divided into folders based
 upon experiment. The exp_type argument is then used to find the correct folder of data inside the data_dir. In sum, your data file structure, given multiple experiment types,
