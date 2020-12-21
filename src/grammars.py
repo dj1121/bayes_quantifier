@@ -57,8 +57,8 @@ def create_grammar(g_type):
     
     elif g_type == "error_testing":
         grammar = Grammar(start='BOOL')
-        grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1) # subset_(B,A) returns if B subset of A
-        grammar.add_rule('SET', 'A', None, 5)
+        grammar.add_rule('BOOL', 'card_gteq', ['CARD', '3'], 1.0) # subset_(B,A) returns if B subset of A
+        grammar.add_rule('CARD', 'cardinality_', ['SET'], 1.0)
         grammar.add_rule('SET', 'B', None, 5)
         return grammar
 
