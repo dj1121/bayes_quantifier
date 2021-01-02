@@ -123,10 +123,10 @@ class HypothesisA(LOTHypothesis):
             curr_cons_truth = None
             if self.cons_q_m(context):
                 counts['cons_t'] += 1
-                curr_super_truth = True
+                curr_cons_truth = True
             else:
                 counts['cons_f'] += 1
-                curr_super_truth = False
+                curr_cons_truth = False
 
             # TT, TF, FT, FF for curr and submodels
             if curr_truth and curr_sub_truth:
@@ -264,7 +264,7 @@ class HypothesisA(LOTHypothesis):
             """
             if val == 0:
                 return 0
-            return log(val)
+            return log(val,2)
 
         return super().compute_prior() + (self.lam_1 * -smooth_log(self.degree_monotonicity)) + (self.lam_2 * -smooth_log(self.degree_conservativity))
 
@@ -280,28 +280,45 @@ class HypothesisA(LOTHypothesis):
             """
             if val == 0:
                 return 0
-            return log(val)
+            return log(val,2)
         
-        k = 0.0001 # Smoothing for denominators
+        k = 0.0001 # Smoothing for denominators??
 
         # Get H(1Q)
-        h_1_q = (self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f']))
+        h_1_q = -((self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f'])))
+        if h_1_q < 0:
+            h_1_q = 0
+        elif h_1_q > 1:
+            h_1_q = 1
 
         # Get H(1Q | 1Q<)
-        h_1_q_sub = (self.probs['M_t_sub_t'] * smooth_log(self.probs['M_t_sub_t'] / (self.probs['sub_t'] + k))) +\
-                    (self.probs['M_t_sub_f'] * smooth_log(self.probs['M_t_sub_f'] / (self.probs['sub_f'] + k))) +\
-                    (self.probs['M_f_sub_t'] * smooth_log(self.probs['M_f_sub_t'] / (self.probs['sub_t'] + k))) +\
-                    (self.probs['M_f_sub_f'] * smooth_log(self.probs['M_f_sub_f'] / (self.probs['sub_f'] + k)))
+        h_1_q_sub = -((self.probs['M_t_sub_t'] * smooth_log(self.probs['M_t_sub_t'] / (self.probs['M_t'] + k))) +\
+                    (self.probs['M_t_sub_f'] * smooth_log(self.probs['M_t_sub_f'] / (self.probs['M_t'] + k))) +\
+                    (self.probs['M_f_sub_t'] * smooth_log(self.probs['M_f_sub_t'] / (self.probs['M_f'] + k))) +\
+                    (self.probs['M_f_sub_f'] * smooth_log(self.probs['M_f_sub_f'] / (self.probs['M_f'] + k))))
+        if h_1_q_sub < 0:
+            h_1_q_sub = 0
+        elif h_1_q_sub > 1:
+            h_1_q_sub = 1
 
         # Get H(1Q | 1Q>)
-        h_1_q_super = (self.probs['M_t_super_t'] * smooth_log(self.probs['M_t_super_t'] / (self.probs['super_t'] + k) )) +\
-                    (self.probs['M_t_super_f'] * smooth_log(self.probs['M_t_super_f'] / (self.probs['super_f'] + k))) +\
-                    (self.probs['M_f_super_t'] * smooth_log(self.probs['M_f_super_t'] / (self.probs['super_t'] + k))) +\
-                    (self.probs['M_f_super_f'] * smooth_log(self.probs['M_f_super_f'] / (self.probs['super_f'] + k)))
+        h_1_q_super = -((self.probs['M_t_super_t'] * smooth_log(self.probs['M_t_super_t'] / (self.probs['M_t'] + k) )) +\
+                    (self.probs['M_t_super_f'] * smooth_log(self.probs['M_t_super_f'] / (self.probs['M_t'] + k))) +\
+                    (self.probs['M_f_super_t'] * smooth_log(self.probs['M_f_super_t'] / (self.probs['M_f'] + k))) +\
+                    (self.probs['M_f_super_f'] * smooth_log(self.probs['M_f_super_f'] / (self.probs['M_f'] + k))))
+        if h_1_q_super < 0:
+            h_1_q_super = 0
+        elif h_1_q_super > 1:
+            h_1_q_super = 1
         
-        up_degree = float(1 - (h_1_q_sub / (h_1_q + k)))
-        down_degree = float(1 - (h_1_q_super / (h_1_q + k)))
-
+        ## Smoothing??
+        if h_1_q == 0:
+            up_degree = float(1 - h_1_q_sub)
+            down_degree = float(1 - h_1_q_super)
+        else:
+            up_degree = float(1 - (h_1_q_sub / h_1_q))
+            down_degree = float(1 - (h_1_q_super / h_1_q))
+    
         return max(up_degree, down_degree)
 
     def compute_degree_conservativity(self):
@@ -315,20 +332,25 @@ class HypothesisA(LOTHypothesis):
             """
             if val == 0:
                 return 0
-            return log(val)
+            return log(val,2)
         
         k = 0.0001 # Smoothing for denominators
 
         # Get H(1Q)
-        h_1_q = (self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f']))
+        h_1_q = -((self.probs['M_t'] * smooth_log(self.probs['M_t'])) + (self.probs['M_f'] * smooth_log(self.probs['M_f'])))
 
         # Get H(1Q | 1Q con)
-        h_1_q_cons = (self.probs['M_t_cons_t'] * smooth_log(self.probs['M_t_cons_t'] / (self.probs['cons_t'] + k))) +\
-                    (self.probs['M_t_cons_f'] * smooth_log(self.probs['M_t_cons_f'] / (self.probs['cons_f'] + k))) +\
-                    (self.probs['M_f_cons_t'] * smooth_log(self.probs['M_f_cons_t'] / (self.probs['cons_t'] + k))) +\
-                    (self.probs['M_f_cons_f'] * smooth_log(self.probs['M_f_cons_f'] / (self.probs['cons_f'] + k)))
+        h_1_q_cons = -((self.probs['M_t_cons_t'] * smooth_log(self.probs['M_t_cons_t'] / (self.probs['M_t'] + k))) +\
+                    (self.probs['M_t_cons_f'] * smooth_log(self.probs['M_t_cons_f'] / (self.probs['M_t'] + k))) +\
+                    (self.probs['M_f_cons_t'] * smooth_log(self.probs['M_f_cons_t'] / (self.probs['M_f'] + k))) +\
+                    (self.probs['M_f_cons_f'] * smooth_log(self.probs['M_f_cons_f'] / (self.probs['M_f'] + k))))
         
-        degree_cons = float(1 - (h_1_q_cons / (h_1_q + k)))
+        # degree_cons = float(1 - (h_1_q_cons / (h_1_q + k)))
+
+        if h_1_q == 0:
+            degree_cons = float(1 - h_1_q_cons)
+        else:
+            degree_cons = float(1 - (h_1_q_cons / h_1_q))
 
         return degree_cons
 

@@ -43,7 +43,7 @@ def parse_args():
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=5000)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=500)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
@@ -186,14 +186,14 @@ if __name__ == "__main__":
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps
 
-    # # For bug testing purposes
-    # contexts_test = [FunctionData(input=[Multiset(['red_t', 'red_t']), Multiset(["red_t", "red_t", "red_c"])], output=None),
-    #                  FunctionData(input=[Multiset([]),Multiset([])], output=None)]
-    # test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
+    # For bug testing purposes
+    contexts_test = [FunctionData(input=[Multiset(['red_t', 'red_t']), Multiset(["red_t", "red_t", "red_c"])], output=None),
+                     FunctionData(input=[Multiset([]),Multiset([])], output=None)]
+    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
 
     # Select a starting hypothesis and train
-    h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
-    train(data, h0, n_contexts, args.out, exp_id, sample_steps)
+    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
+    # train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
-    # Plot outputs
-    plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
+    # # Plot outputs
+    # plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
