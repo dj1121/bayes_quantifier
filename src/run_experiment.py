@@ -9,7 +9,6 @@
 # Python Imports
 import os
 import argparse
-from math import log
 import time
 
 # Personal Code
@@ -23,6 +22,7 @@ import visualize
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
 from LOTlib3.DataAndObjects import FunctionData, Obj
+
 from multiset import *
 
 TIME = time.strftime("%m%d%M%S")
@@ -82,6 +82,7 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     # Record top N concept(s) with top posterior probability over this data/steps
     with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
+            print(h.value.degree_monotonicity)
             # Check if it's a trivial hypothesis and if so, skip it
             if len(h.value.args) > 1:
                 skip = True
@@ -186,14 +187,12 @@ if __name__ == "__main__":
     grammar = grammars.create_grammar(args.g_type)
     sample_steps = args.sample_steps
 
-    # For bug testing purposes
-    contexts_test = [FunctionData(input=[Multiset(['red_t', 'red_t']), Multiset(["red_t", "red_t", "red_c"])], output=None),
-                     FunctionData(input=[Multiset([]),Multiset([])], output=None)]
-    test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, contexts_test)
+    # # For bug testing purposes
+    # test_hypothesis = hypotheses.create_hypothesis(args.h_type, grammars.create_grammar("error_testing"), lam_1, lam_2, all_contexts)
 
     # Select a starting hypothesis and train
-    # h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
-    # train(data, h0, n_contexts, args.out, exp_id, sample_steps)
+    h0 = hypotheses.create_hypothesis(args.h_type, grammar, lam_1, lam_2, all_contexts)
+    train(data, h0, n_contexts, args.out, exp_id, sample_steps)
 
-    # # Plot outputs
-    # plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
+    # Plot outputs
+    plot(data_path, args.out, exp_id=exp_id, exp_type=args.exp_type)
