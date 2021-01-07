@@ -91,7 +91,7 @@ def plt_h_acc(data_dir, out, exp_id, exp_type):
 
 def plt_mprob(data_dir, out, exp_id, exp_type):
     """
-    Plots the top hypothesis over all models trained per data seen, along with the posterior probability of that hypothesis.
+    Plots the top hypothesis over all models trained per data seen
     NOTE: Uses default Pandas method of tiebreaking
     Saves a .png file of plot in experimental results folder.
 
@@ -118,7 +118,7 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
      
     # Data frame that finds max hypothesis/prob pair per each row over all models
     df = pd.concat(dfs).min(level=0)
-    model_probs = df['post_prob']
+    model_probs = df['prior_prob']
     hypotheses = df['hypothesis']
     
     # Seaborn
@@ -128,13 +128,13 @@ def plt_mprob(data_dir, out, exp_id, exp_type):
     # Labels
     plt.xlabel("# Contexts Seen", fontsize=12)
     plt.xticks(np.arange(0, 100, 12))
-    plt.ylabel("Posterior Probability (Log)", fontsize=12)
-    plt.title("Best Posterior Score Per Data Seen \n(" + exp_id + ")")
-    # # Print the concept out for every 12th concept
-    # style = dict(size=7, color='gray')
-    # for i in range(0, len(model_probs), 11):
-    #     plt.text(i, model_probs[i], hypotheses[i], **style)
-    # plt.show()
+    plt.ylabel("Prior Probability (Log)", fontsize=12)
+    plt.title("Best-Guess Hypothesis Per Data Seen \n(" + exp_id + ")")
+    # Print the concept out for every 12th concept
+    style = dict(size=7, color='gray')
+    for i in range(0, len(model_probs), 11):
+        plt.text(i, model_probs[i], hypotheses[i], **style)
+    plt.show()
     plt.savefig(out + exp_id + "/" + exp_id +'_prob.png', dpi=400)
 
 def plt_hm_acc(data_dir, out, exp_id, exp_type):

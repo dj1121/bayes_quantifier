@@ -7,8 +7,12 @@
 
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from LOTlib3.DataAndObjects import FunctionData
-from LOTlib3.Miscellaneous import nicelog as log
+from LOTlib3.Miscellaneous import Infinity
+from LOTlib3.Eval import EvaluationException
+from math import log
 from os import path
+
+k = 0.00001
 
 class HypothesisA(LOTHypothesis):
     """
@@ -34,13 +38,13 @@ class HypothesisA(LOTHypothesis):
     def __call__(self, *args):
         try:
             return LOTHypothesis.__call__(self, *args)
-        except ZeroDivisionError:
-            return float("nan")
+        except EvaluationException: # catch recursion and too big
+            return None
 
     def compute_single_likelihood(self, datum):
         return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
 
-    def calc_degree_probs(self):
+    def compute_degree_probs(self):
         """
         Evaluate the hypothesis on contexts to get probabilities
             - p(1Q = True) = probability that evals to true over all contexts
@@ -248,59 +252,73 @@ class HypothesisA(LOTHypothesis):
         NOTE: The super function computes a log probability. Thus, we can add the degrees.
         """
 
-        # Add these attributes to value attribute of hypothesis (so they are unique to each sampled hypothesis)
-        if self.value is not None and (self.lam_1 > 0 or self.lam_2 > 0):
+        # If hypothesis too long, set prior to -inf
+        if self.value.count_nodes() > self.maxnodes:
+            setattr(self.value, 'degree_monotonicity', -Infinity)
+            setattr(self.value, 'degree_conservativity', -Infinity)
+            setattr(self.value, 'probs', None)
+            return -Infinity    
 
-            setattr(self.value, 'probs', self.calc_degree_probs())
-            
-            if self.lam_1 > 0.0:
-                setattr(self.value, 'degree_monotonicity', self.compute_degree_monotonicity())
-            else:
-                setattr(self.value, 'degree_monotonicity', 0.0)
+        # Compute degrees if needed
+        if self.lam_1 > 0.0 or self.lam_2 > 0.0:
+            setattr(self.value, 'probs', self.compute_degree_probs())
+        else:
+            setattr(self.value, 'probs', None)
+        if self.lam_1 > 0.0:
+            setattr(self.value, 'degree_monotonicity', self.compute_degree_monotonicity())
+        else:
+            # Not actually meaningfully zero, just so that the term zeroes out in prior computation
+            setattr(self.value, 'degree_monotonicity', 0.0)
 
-            if self.lam_2 > 0.0:
-                setattr(self.value, 'degree_conservativity', self.compute_degree_conservativity())
-            else:
-                setattr(self.value, 'degree_conservativity', 0.0)
-                
-            # Don't let these values get copied when sampling hypotheses
-            self.value.NoCopy.add('probs')
-            self.value.NoCopy.add('degree_monotonicity')
-            self.value.NoCopy.add('degree_conservativity')
+        if self.lam_2 > 0.0:
+            setattr(self.value, 'degree_conservativity', self.compute_degree_conservativity())
+        else:
+            # Not actually meaningfully zero, just so that the term zeroes out in prior computation
+            setattr(self.value, 'degree_conservativity', 0.0)         
 
+        self.value.NoCopy.add('probs')
+        self.value.NoCopy.add('degree_monotonicity')
+        self.value.NoCopy.add('degree_conservativity')
 
-        # Fix this so that higher degree (0.9999) = bigger negative
-        return super().compute_prior() + (self.lam_1 * log(self.value.degree_monotonicity)) + (self.lam_2 * log(self.value.degree_conservativity))
+        return super().compute_prior() + (self.lam_1 * limit_log(self.value.degree_monotonicity)) + (self.lam_2 * limit_log(self.value.degree_conservativity))
 
     def compute_degree_monotonicity(self):
         """
         Compute degree of monotonicity, similar to that seen in Posdijk
         Takes the max of the upward monotonicity measure and downward
         """
-        
-        k = 0.00001
 
         # Get H(1Q)
-        h_1_q = -((self.value.probs['M_t'] * log(self.value.probs['M_t'])) + (self.value.probs['M_f'] * log(self.value.probs['M_f'])))
+        h_1_q = -((self.value.probs['M_t'] * limit_log(self.value.probs['M_t'])) + (self.value.probs['M_f'] * limit_log(self.value.probs['M_f'])))
 
         if h_1_q == 0.0:
             return 1.0
-
+            
         # Get H(1Q | 1Q<)
-        h_1_q_sub = -((self.value.probs['M_t_sub_t'] * log(self.value.probs['M_t_sub_t'] / (self.value.probs['sub_t'] + k))) +\
-                    (self.value.probs['M_t_sub_f'] * log(self.value.probs['M_t_sub_f'] / (self.value.probs['sub_f'] + k))) +\
-                    (self.value.probs['M_f_sub_t'] * log(self.value.probs['M_f_sub_t'] / (self.value.probs['sub_t'] + k))) +\
-                    (self.value.probs['M_f_sub_f'] * log(self.value.probs['M_f_sub_f'] / (self.value.probs['sub_f'] + k))))
+        h_1_q_sub = -((self.value.probs['M_t_sub_t'] * limit_log(self.value.probs['M_t_sub_t'] / (self.value.probs['sub_t'] + k))) +\
+                    (self.value.probs['M_t_sub_f'] * limit_log(self.value.probs['M_t_sub_f'] / (self.value.probs['sub_f'] + k))) +\
+                    (self.value.probs['M_f_sub_t'] * limit_log(self.value.probs['M_f_sub_t'] / (self.value.probs['sub_t'] + k))) +\
+                    (self.value.probs['M_f_sub_f'] * limit_log(self.value.probs['M_f_sub_f'] / (self.value.probs['sub_f'] + k))))
 
         # Get H(1Q | 1Q>)
-        h_1_q_super = -((self.value.probs['M_t_super_t'] * log(self.value.probs['M_t_super_t'] / (self.value.probs['super_t'] + k) )) +\
-                    (self.value.probs['M_t_super_f'] * log(self.value.probs['M_t_super_f'] / (self.value.probs['super_f'] + k))) +\
-                    (self.value.probs['M_f_super_t'] * log(self.value.probs['M_f_super_t'] / (self.value.probs['super_t'] + k))) +\
-                    (self.value.probs['M_f_super_f'] * log(self.value.probs['M_f_super_f'] / (self.value.probs['super_f'] + k))))
-        
+        h_1_q_super = -((self.value.probs['M_t_super_t'] * limit_log(self.value.probs['M_t_super_t'] / (self.value.probs['super_t'] + k))) +\
+                    (self.value.probs['M_t_super_f'] * limit_log(self.value.probs['M_t_super_f'] / (self.value.probs['super_f'] + k))) +\
+                    (self.value.probs['M_f_super_t'] * limit_log(self.value.probs['M_f_super_t'] / (self.value.probs['super_t'] + k))) +\
+                    (self.value.probs['M_f_super_f'] * limit_log(self.value.probs['M_f_super_f'] / (self.value.probs['super_f'] + k))))
+
         up_degree = float(1 - (h_1_q_sub / h_1_q))
         down_degree = float(1 - (h_1_q_super / h_1_q))
-    
+
+        # Make sure values in range (sometimes they get very slightly above or below)
+        if up_degree < 0.:
+            up_degree = 0
+        if up_degree > 0.999:
+            up_degree = 1.0
+        if down_degree < 0.:
+            down_degree = 0
+        if down_degree > 0.999:
+            down_degree = 1.0
+
         return max(up_degree, down_degree)
 
     def compute_degree_conservativity(self):
@@ -308,22 +326,28 @@ class HypothesisA(LOTHypothesis):
         Compute degree of conservativity, evaluate truth in <M, A, A \cap B>
         i.e. B' = A \cap B
         """
-        
-        k = 0.00001
 
         # Get H(1Q)
-        h_1_q = -((self.value.probs['M_t'] * log(self.value.probs['M_t'])) + (self.value.probs['M_f'] * log(self.value.probs['M_f'])))
+        h_1_q = -((self.value.probs['M_t'] * limit_log(self.value.probs['M_t'])) + (self.value.probs['M_f'] * limit_log(self.value.probs['M_f'])))
 
         if h_1_q == 0:
             return 1
 
         # Get H(1Q | 1Q con)
-        h_1_q_cons = -((self.value.probs['M_t_cons_t'] * log(self.value.probs['M_t_cons_t'] / (self.value.probs['cons_t'] + k))) +\
-                    (self.value.probs['M_t_cons_f'] * log(self.value.probs['M_t_cons_f'] / (self.value.probs['cons_f'] + k))) +\
-                    (self.value.probs['M_f_cons_t'] * log(self.value.probs['M_f_cons_t'] / (self.value.probs['cons_t'] + k))) +\
-                    (self.value.probs['M_f_cons_f'] * log(self.value.probs['M_f_cons_f'] / (self.value.probs['cons_f'] + k))))
+        h_1_q_cons = -((self.value.probs['M_t_cons_t'] * limit_log(self.value.probs['M_t_cons_t'] / (self.value.probs['cons_t'] + k))) +\
+                    (self.value.probs['M_t_cons_f'] * limit_log(self.value.probs['M_t_cons_f'] / (self.value.probs['cons_f'] + k))) +\
+                    (self.value.probs['M_f_cons_t'] * limit_log(self.value.probs['M_f_cons_t'] / (self.value.probs['cons_t'] + k))) +\
+                    (self.value.probs['M_f_cons_f'] * limit_log(self.value.probs['M_f_cons_f'] / (self.value.probs['cons_f'] + k))))
 
-        return float(1 - (h_1_q_cons / h_1_q))
+        degree_cons = float(1 - (h_1_q_cons / h_1_q))
+
+        # Make sure in range
+        if degree_cons < 0.:
+            degree_cons = 0
+        if degree_cons > 0.999:
+            degree_cons = 1.0
+
+        return degree_cons
 
 def create_hypothesis(h_type, grammar, lam_1, lam_2, all_contexts):
     """
@@ -350,10 +374,10 @@ def create_hypothesis(h_type, grammar, lam_1, lam_2, all_contexts):
     else:
         raise Exception("There exists no h_type \'" + h_type + '\'. Check hypotheses.py for types of hypotheses to use.')
 
-# def log(val):
-#     """
-#     Returns 0 if value is zero, otherwise returns log of value 
-#     """
-#     if val == 0:
-#         return -float('inf')
-#     return log(val,2)
+def limit_log(x):
+    """
+    Suitable for entropies where convention is to use limit of 0 * log(0) = 0
+    """
+    if x == 0.0:
+        return 0
+    return log(x,2)

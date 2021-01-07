@@ -22,6 +22,8 @@ import visualize
 from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 from LOTlib3.TopN import TopN
 from LOTlib3.DataAndObjects import FunctionData, Obj
+from LOTlib3.Miscellaneous import Infinity
+from LOTlib3 import break_ctrlc
 
 from multiset import *
 
@@ -43,7 +45,7 @@ def parse_args():
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=500)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=50)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
@@ -54,14 +56,7 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
     """
     Using data, grammar, and a starting hypothesis, takes sample_steps number
     of samples over data and stores the best ranking hypothesis in TopN. In other
-    words, conducts inference/compute posterior over data given. Writes results to
-    output files stored in model_out.
-
-    NOTE: This function automatically skips over trivial hypotheses, i.e. hypotheses with multiple elements which are all 
-          equal such as:
-            - subset_(A,A)
-            - intersection(B,B)
-            - etc.
+    words, conducts inference/compute posterior over data given.
 
     Parameters:
         - data (list): A list of FunctionData objects, a data type of LOTLib specifying input/output pairs for training
@@ -81,25 +76,19 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
 
     # Record top N concept(s) with top posterior probability over this data/steps
     with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
-        for h in MetropolisHastingsSampler(h0, data, steps=sample_steps):
-            print(h.value.degree_monotonicity)
-            # Check if it's a trivial hypothesis and if so, skip it
-            if len(h.value.args) > 1:
-                skip = True
-                for i in range(1, len(h.value.args)):
-                    if h.value.args[i] != h.value.args[i-1]:
-                        skip = False
-                        break
-                if skip:
-                    continue
-            # Otherwise add it to our topN
+        i = 1
+        for h in break_ctrlc(MetropolisHastingsSampler(h0, data, steps=sample_steps)):
+            # print("Sample #", i, "--- Hypothesis Length:", h.value.count_nodes(),\
+            #  "Mono:", h.value.degree_monotonicity, "Cons:", h.value.degree_conservativity)
             TN.add(h)
+            i += 1
         # Output
         for h in TN.get_all(sorted=True):
-            f.write(str(h) + "|" + str(h.posterior_score))
+            f.write(str(h) + "|" + str(h.prior))
         f.close()
     
-    # With best concept, record accuracy over all data provided
+    # With best hypothesis, record accuracy over all data provided
+    # If the best hypothesis is one that is too long (-inf prior), this accuracy will just return 0 since the eval will returning None
     with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
         total = len(data)
         num_correct = 0
@@ -124,9 +113,9 @@ def plot(data, out, exp_id, exp_type):
     Returns:
         - None
     """
-    visualize.plt_h_acc(data, out, exp_id, exp_type)
+    # visualize.plt_h_acc(data, out, exp_id, exp_type)
     visualize.plt_hm_acc(data, out, exp_id, exp_type)
-    visualize.plt_mprob(data, out, exp_id, exp_type)
+    # visualize.plt_mprob(data, out, exp_id, exp_type)
 
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
     """
@@ -156,7 +145,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
     for i in range(0, len(data_split)):
         # Create headings of output CSV
         with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
-            f.write("hypothesis|post_prob|acc\n")
+            f.write("hypothesis|prior_prob|acc\n")
 
         model_i_data = data_split[i]
         print("Training Model:", i + 1, "of", len(data_split))
