@@ -49,94 +49,6 @@ def h_acc(data_dir):
     
     return human_accuracies
 
-def plt_h_acc(data_dir, out, exp_id, exp_type):
-    """
-    Plots human learning curve, a plot of average human accuracy over # contexts seen with an error band of 1 standard deviation.
-    Saves a .png file of plot in experimental results folder.
-
-    Parameters:
-        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
-        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
-        - exp_id (str): Identifier for this experiment run
-        - exp_type (str): What kind of experiment is being run (monotone, non-convex, non-monotone, etc.)
-
-    Returns:
-        - None
-    """
-
-    plt.figure()
-
-    # Read human data files and get human accuracies
-    human_accuracies = h_acc(data_dir)
-    avg_hum_accuracies = pd.Series(np.average(human_accuracies, axis=0))
-    sd_accuracies = pd.Series(np.std(human_accuracies, axis=0))
-
-    # Seaborn
-    sns.set(style="darkgrid")
-    plt.fill_between(x=np.arange(len(avg_hum_accuracies)),
-                 y1=avg_hum_accuracies - sd_accuracies,
-                 y2=avg_hum_accuracies + sd_accuracies,
-                 alpha=0.25
-                 )
-    plt.plot(np.arange(len(avg_hum_accuracies)), avg_hum_accuracies)
-
-    # Labels
-    plt.xlabel("# Contexts Seen", fontsize=12)
-    plt.xticks(np.arange(0, 100, 12))
-    plt.yticks((np.arange(0, 1.1, 0.1)))
-    plt.ylabel("Avg. Human Accuracy", fontsize=12)
-    plt.title("Human Learning Curve \n(" + exp_type + ")")
-    # plt.show()
-    plt.savefig(out + exp_id + "/" + exp_id + '_human_plot.png', dpi=400)
-
-def plt_mprob(data_dir, out, exp_id, exp_type):
-    """
-    Plots the top hypothesis over all models trained per data seen
-    NOTE: Uses default Pandas method of tiebreaking
-    Saves a .png file of plot in experimental results folder.
-
-    Parameters:
-        - data_dir (str): Path to where human experiment data stored (used for plotting human performance)
-        - out (str): Path to where model output stored (used for plotting model performance) and path where plots (png files) will be saved
-        - exp_id (str): Identifier for this experiment run
-        - exp_type (str): What kind of quantifier is being run
-
-    Returns:
-        - None
-    """
-
-    plt.figure()
-
-    dfs = []
-
-    # Append data frames to model_probs
-    for f_name in os.listdir(out + exp_id):
-        if ".png" in f_name:
-            continue
-        path = out + exp_id + "/" + f_name
-        dfs.append(pd.read_csv(path, sep="|"))
-     
-    # Data frame that finds max hypothesis/prob pair per each row over all models
-    df = pd.concat(dfs).min(level=0)
-    model_probs = df['prior_prob']
-    hypotheses = df['hypothesis']
-    
-    # Seaborn
-    sns.set(style="darkgrid")
-    plt.plot(np.arange(len(model_probs)), model_probs, '.-')
-
-    # Labels
-    plt.xlabel("# Contexts Seen", fontsize=12)
-    plt.xticks(np.arange(0, 100, 12))
-    plt.ylabel("Prior Probability (Log)", fontsize=12)
-    plt.title("Best-Guess Hypothesis Per Data Seen \n(" + exp_id + ")")
-    # Print the concept out for every 12th concept
-    style = dict(size=7, color='gray')
-    for i in range(0, len(model_probs), 11):
-        plt.text(i, model_probs[i], hypotheses[i], **style)
-    plt.show()
-    plt.savefig(out + exp_id + "/" + exp_id +'_prob.png', dpi=400)
-
 def plt_hm_acc(data_dir, out, exp_id, exp_type):
     """
     Plots the average human accuracy and average model accuracy per data seen.
@@ -209,4 +121,6 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
         # plt.show()
         plt.savefig(out + exp_id + "/" + exp_id + '_acc' + str(i+1) + '.png', dpi=400)
 
-# plt_hm_acc("./../data/at_least_3/", "./../results/", exp_id="12205215_at_least_3_0.0_0.0", exp_type="at_least_3")
+    plt.close('all')
+
+# plt_hm_acc("./../data/not_all/", "./../results/", exp_id="01084153_not_all_0.0_0.0", exp_type="not_all")
