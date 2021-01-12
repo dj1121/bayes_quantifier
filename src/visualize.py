@@ -10,6 +10,7 @@ import os
 import pandas as pd
 import seaborn as sns
 import numpy as np
+from sklearn.metrics import r2_score
 
 def h_acc(data_dir):
     """
@@ -83,6 +84,8 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     ###########################
     plt.figure()
 
+    r2 = r2_score(avg_hum_accuracies, avg_mod_accuracies)
+
     # Seaborn
     sns.set(style="darkgrid")
     plt.plot(avg_hum_accuracies)
@@ -93,7 +96,7 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
     plt.xticks(np.arange(0, 100, 12))
     plt.yticks((np.arange(0, 1.1, 0.1)))
     plt.ylabel("Accuracy", fontsize=12)
-    plt.title("Avg. Human and Model Accuracy Over Data Seen \n(" + exp_id + ")")
+    plt.title("Avg. Human and Model Accuracy Over Data Seen \n(" + exp_id + ")" + "\nr^2: " + str(r2))
     plt.legend(["Average Human Accuracy " + "n=" + str(len(human_accuracies)), 'Average Model Accuracy ' + "n=" + str(len(model_accuracies))])
 
     # plt.show()
@@ -123,4 +126,4 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
 
     plt.close('all')
 
-# plt_hm_acc("./../data/not_all/", "./../results/", exp_id="01084153_not_all_0.0_0.0", exp_type="not_all")
+# plt_hm_acc("./../data/at_most_2/", "./../results/", exp_id="01122356_at_most_2_0.0_0.0", exp_type="at_most_2")

@@ -25,7 +25,10 @@ from LOTlib3.DataAndObjects import FunctionData, Obj
 from LOTlib3.Miscellaneous import Infinity
 from LOTlib3 import break_ctrlc
 
+# Other
 from multiset import *
+import numpy as np
+from math import exp
 
 TIME = time.strftime("%m%d%M%S")
 
@@ -45,7 +48,7 @@ def parse_args():
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=500)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=50)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
@@ -71,37 +74,33 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
         - None
     """
     
-    # Store the top hypothesis (n=1)
-    TN = TopN(N=1)
+    # Store the top 10 hypotheses (n=10)
+    TN = TopN(N=10)
 
     infer_data = data[0:-1]
     eval_data = data
 
     # Record top N concept(s) with top posterior probability over this data/steps
     # Infer with data/labels from all previous contexts (not current), 0th context = inference with no labels seen yet
+    i = 1
+    for h in break_ctrlc(MetropolisHastingsSampler(h0, infer_data, steps=sample_steps)):
+        # print("Sample #", i, "--- Hypothesis Length:", h.value.count_nodes(),\
+        #     "Mono:", h.value.degree_monotonicity, "Cons:", h.value.degree_conservativity)
+        TN.add(h)
+        i += 1
+
+    # With 10 best hypotheses, record avg accuracy over all data provided so far (including this context)
     with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
-        i = 1
-        for h in break_ctrlc(MetropolisHastingsSampler(h0, infer_data, steps=sample_steps)):
-            # print("Sample #", i, "--- Hypothesis Length:", h.value.count_nodes(),\
-            #  "Mono:", h.value.degree_monotonicity, "Cons:", h.value.degree_conservativity)
-            TN.add(h)
-            i += 1
-        # Output
-        for h in TN.get_all(sorted=True):
-            f.write(str(h) + "|" + str(h.prior))
-        f.close()
-    
-    # With best hypothesis, record accuracy over all data provided (including this screen)
-    # If the best hypothesis is one that is too long (-inf prior), this accuracy will just return 0 since the eval will returning None
-    with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
+        accs = []
         total = len(eval_data)
-        num_correct = 0
         for h in TN.get_all(sorted=True):
+            num_correct = 0
             for datum in eval_data:
                 # If the model guesses the right training label
                 if h.eval_q_m(datum) == datum.output:
                     num_correct += 1
-            f.write("|" + str(float(num_correct/total)) + "\n")
+            accs.append(num_correct/total)
+        f.write(str(float(np.mean(accs))) + "\n")
         f.close()
 
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
@@ -132,7 +131,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
     for i in range(0, len(data_split)):
         # Create headings of output CSV
         with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
-            f.write("hypothesis|prior_prob|acc\n")
+            f.write("acc\n")
 
         model_i_data = data_split[i]
         print("Training Model:", i + 1, "of", len(data_split))

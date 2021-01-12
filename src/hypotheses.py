@@ -7,7 +7,7 @@
 
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from LOTlib3.DataAndObjects import FunctionData
-from LOTlib3.Miscellaneous import Infinity
+from LOTlib3.Miscellaneous import Infinity, attrmem
 from LOTlib3.Eval import EvaluationException
 from math import log
 from os import path
@@ -246,10 +246,10 @@ class HypothesisA(LOTHypothesis):
         
         return self.eval_q_m(conservation_model)
 
+    @attrmem('prior')
     def compute_prior(self):
         """
         Overriden prior computation to allow for degrees of monotonicity and conservativity.
-        NOTE: The super function computes a log probability. Thus, we can add the degrees.
         """
 
         # If hypothesis too long, set prior to -inf
@@ -257,7 +257,7 @@ class HypothesisA(LOTHypothesis):
             setattr(self.value, 'degree_monotonicity', -Infinity)
             setattr(self.value, 'degree_conservativity', -Infinity)
             setattr(self.value, 'probs', None)
-            return -Infinity    
+            return -Infinity
 
         # Compute degrees if needed
         if self.lam_1 > 0.0 or self.lam_2 > 0.0:
@@ -280,7 +280,7 @@ class HypothesisA(LOTHypothesis):
         self.value.NoCopy.add('degree_monotonicity')
         self.value.NoCopy.add('degree_conservativity')
 
-        return super().compute_prior() + (self.lam_1 * limit_log(self.value.degree_monotonicity)) + (self.lam_2 * limit_log(self.value.degree_conservativity))
+        return (self.grammar.log_probability(self.value) / self.prior_temperature) + (self.lam_1 * limit_log(self.value.degree_monotonicity)) + (self.lam_2 * limit_log(self.value.degree_conservativity))
 
     def compute_degree_monotonicity(self):
         """

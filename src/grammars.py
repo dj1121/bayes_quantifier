@@ -29,13 +29,13 @@ def create_grammar(g_type):
         # Set operations
         grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1.0) # subset_(B,A) returns if B subset of A
         grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
-        grammar.add_rule('BOOL', 'card_lt', ['CARD', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'card_gt', ['CARD', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'card_eq', ['CARD', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'card_lteq', ['CARD', 'NUM'], 1.0)
-        grammar.add_rule('BOOL', 'card_gteq', ['CARD', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'lt', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'gt', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'eq', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'lteq', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'gteq', ['NUM', 'NUM'], 1.0)
 
-        grammar.add_rule('CARD', 'cardinality_', ['SET'], 1.0)
+        grammar.add_rule('NUM', 'cardinality_', ['SET'], 1.0)
 
         grammar.add_rule('SET', 'intersection_', ['SET', 'SET'], 1.0)
         grammar.add_rule('SET', 'union_', ['SET', 'SET'], 1.0)
