@@ -34,6 +34,8 @@ def create_grammar(g_type):
         grammar.add_rule('BOOL', 'eq', ['NUM', 'NUM'], 1.0)
         grammar.add_rule('BOOL', 'lteq', ['NUM', 'NUM'], 1.0)
         grammar.add_rule('BOOL', 'gteq', ['NUM', 'NUM'], 1.0)
+        grammar.add_rule('BOOL', 'True', None, 1.0)   
+        grammar.add_rule('BOOL', 'False', None, 1.0)   
 
         grammar.add_rule('NUM', 'cardinality_', ['SET'], 1.0)
 
@@ -50,17 +52,15 @@ def create_grammar(g_type):
         for n in range(0,10):
             grammar.add_rule('NUM', str(n), None, 1.0)
 
-        grammar.add_rule('SET', 'A', None, 5)
-        grammar.add_rule('SET', 'B', None, 5)
+        grammar.add_rule('SET', 'A', None, 5.0)
+        grammar.add_rule('SET', 'B', None, 5.0)
         
         return grammar
     
     elif g_type == "error_testing":
         grammar = Grammar(start='BOOL')
-        # grammar.add_rule('BOOL', 'card_gteq', ['CARD', '3'], 1.0) # subset_(B,A) returns if B subset of A
-        grammar.add_rule('BOOL', 'card_lteq', ['CARD', '3'], 1.0)
-        grammar.add_rule('CARD', 'cardinality_', ['SET'], 1.0)
-        grammar.add_rule('SET', 'B', None, 5)
+        grammar.add_rule('BOOL', 'intersect_card_gteq_3', ['A', 'B'], 1.0)
+        grammar.add_rule('BOOL', 'True', None, 1.0)        
         return grammar
 
     else:

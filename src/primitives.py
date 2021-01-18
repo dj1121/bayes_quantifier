@@ -6,6 +6,7 @@
 # -----------------------------------------------------------
 
 from LOTlib3.Eval import primitive
+from multiset import *
 
 @primitive
 def gt(x,y):
@@ -26,3 +27,9 @@ def lteq(x,y):
 @primitive
 def eq(x, y):
     return x == y
+
+
+# Debugging purposes
+@primitive
+def intersect_card_gteq_3(x, y):
+    return len(x.intersection(y)) >= 3

@@ -6,6 +6,7 @@
 # -----------------------------------------------------------
 
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
+from LOTlib3.Hypotheses.Likelihoods.BinaryLikelihood import BinaryLikelihood
 from LOTlib3.DataAndObjects import FunctionData
 from LOTlib3.Miscellaneous import Infinity, attrmem
 from LOTlib3.Eval import EvaluationException
@@ -14,7 +15,7 @@ from os import path
 
 k = 0.00001
 
-class HypothesisA(LOTHypothesis):
+class HypothesisA(BinaryLikelihood, LOTHypothesis):
     """
     A hypothesis type which assumes two sets and a simple likelihood function
     as seen in Goodman et al. 2010. Also incporates degrees of monotonicity 
@@ -41,8 +42,8 @@ class HypothesisA(LOTHypothesis):
         except EvaluationException: # catch recursion and too big
             return None
 
-    def compute_single_likelihood(self, datum):
-        return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
+    # def compute_single_likelihood(self, datum):
+    #     return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
 
     def compute_degree_probs(self):
         """

@@ -43,12 +43,12 @@ def parse_args():
         - args (argparse.Namespace): The list of arguments passed in
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-exp_type", type=str, help="Experiment type (specify folder name of data for quantifier of choice)", default="at_most_2") # Required
+    parser.add_argument("-exp_type", type=str, help="Experiment type (specify folder name of data for quantifier of choice)", default="at_least_3") # Required
     parser.add_argument("-data_dir",type=str, help = "Path to main data directory (not specific quantifier)", default ="./../sample_data/")
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=50)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=10000)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
@@ -89,18 +89,30 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
         TN.add(h)
         i += 1
 
-    # With 10 best hypotheses, record avg accuracy over all data provided so far (including this context)
+    # With 10 best hypotheses
     with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
-        accs = []
-        total = len(eval_data)
+        # Trying new thing for "accuracy"
+        s = 0
         for h in TN.get_all(sorted=True):
-            num_correct = 0
-            for datum in eval_data:
-                # If the model guesses the right training label
-                if h.eval_q_m(datum) == datum.output:
-                    num_correct += 1
-            accs.append(num_correct/total)
-        f.write(str(float(np.mean(accs))) + "\n")
+            # Eval on current context
+            curr = eval_data[-1]
+            if h.eval_q_m(curr) == curr.output:
+                    print(h, exp(h.posterior_score))
+                    s += exp(h.posterior_score)
+        f.write(str(float(s)) + "\n")
+
+        # Old accuracy
+        # accs = []
+        # total = len(eval_data)
+        # for h in TN.get_all(sorted=True):
+        #     num_correct = 0
+        #     for datum in eval_data:
+        #         # If the model guesses the right training label
+        #         if h.eval_q_m(datum) == datum.output:
+        #             num_correct += 1
+        #     accs.append(num_correct/total)
+        # f.write(str(float(np.mean(accs))) + "\n")
+
         f.close()
 
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
