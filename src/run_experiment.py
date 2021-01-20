@@ -91,7 +91,7 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space
         TN.add(h)
         i += 1
 
-    # Add TopN hypothesis over this data to fixed hypothesis space
+    # Add TopN hypotheses over this data to fixed hypothesis space
     for h in TN.get_all(sorted=True):
         fixed_h_space.append(h)
 
@@ -114,26 +114,25 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
         - None
     """
 
-    fixed_h_space = []
-
     # Split data per n amount of contexts per human
     # A separate model is trained on each set of data (as each human sees)
     data_split = []
     for i in range(0, len(data), n_contexts):
         data_split.append(data[i:i+n_contexts])    
 
-    # Inference over of data seen so far by given model (mimicking humans seeing contexts in succession)
+    # Inference over data seen so far by given model (mimicking humans seeing contexts in succession)
     for i in range(0, len(data_split)):
+        fixed_h_space = []
         model_i_data = data_split[i]
         print("Training Model:", i + 1, "of", len(data_split))
 
-        # First pass, get TopN hypotheses at each context, create fixed hypothesis space
+        # First pass over this model's data, get TopN hypotheses at each context, create fixed hypothesis space
         for j in range(len(model_i_data)):
             data_chunk = model_i_data[0:j+1]
             print("Model " + str(i + 1) + ", Context #:", j + 1, ", Inferring with Contexts #:", 0, "to", j)
             infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, i+1, fixed_h_space)
 
-        # Make second pass, compute posterior probs and posterior predictive probs for hypotheses in fixed space
+        # Make second pass over this model's data, compute posterior probs and posterior predictive probs for hypotheses in fixed space
         with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
             f.write("post_pred\n")
             # Go over all number of contexts

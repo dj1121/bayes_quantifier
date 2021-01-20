@@ -126,4 +126,4 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
 
     plt.close('all')
 
-# plt_hm_acc("./../data/at_most_2/", "./../results/", exp_id="01122356_at_most_2_0.0_0.0", exp_type="at_most_2")
+# plt_hm_acc("./../data/at_least_3/", "./../results/", exp_id="01192529_at_least_3_0.0_0.0", exp_type="at_least_3")
