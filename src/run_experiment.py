@@ -29,6 +29,7 @@ from LOTlib3 import break_ctrlc
 from multiset import *
 import numpy as np
 from math import exp
+from scipy.special import softmax
 
 TIME = time.strftime("%m%d%M%S")
 
@@ -55,7 +56,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
+def infer(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space):
     """
     Using data, grammar, and a starting hypothesis, takes sample_steps number
     of samples over data and stores the best ranking hypothesis in TopN. In other
@@ -69,13 +70,14 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
         - grammar (LOTlib3.Grammar): A PCFG grammar specifying the space of possible hypotheses
         - sample_steps (int): Number of samples to perform in inferencing over the given data
         - model_num (int): What number model we are training (since data may be split per human)
+        - fixed_h_space (set): A set of the TopN hypotheses for each context
 
     Returns:
         - None
     """
     
-    # Store the top 10 hypotheses (n=10)
-    TN = TopN(N=10)
+    # Store the top N hypotheses
+    TN = TopN(N=25)
 
     infer_data = data[0:-1]
     eval_data = data
@@ -89,31 +91,9 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num):
         TN.add(h)
         i += 1
 
-    # With 10 best hypotheses
-    with open(args.out + exp_id + "/" + exp_id + "_" + str(model_num) +  ".csv", 'a', encoding='utf-8') as f:
-        # Trying new thing for "accuracy"
-        s = 0
-        for h in TN.get_all(sorted=True):
-            # Eval on current context
-            curr = eval_data[-1]
-            if h.eval_q_m(curr) == curr.output:
-                    print(h, exp(h.posterior_score))
-                    s += exp(h.posterior_score)
-        f.write(str(float(s)) + "\n")
-
-        # Old accuracy
-        # accs = []
-        # total = len(eval_data)
-        # for h in TN.get_all(sorted=True):
-        #     num_correct = 0
-        #     for datum in eval_data:
-        #         # If the model guesses the right training label
-        #         if h.eval_q_m(datum) == datum.output:
-        #             num_correct += 1
-        #     accs.append(num_correct/total)
-        # f.write(str(float(np.mean(accs))) + "\n")
-
-        f.close()
+    # Add TopN hypothesis over this data to fixed hypothesis space
+    for h in TN.get_all(sorted=True):
+        fixed_h_space.append(h)
 
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
     """
@@ -133,6 +113,9 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
     Returns:
         - None
     """
+
+    fixed_h_space = []
+
     # Split data per n amount of contexts per human
     # A separate model is trained on each set of data (as each human sees)
     data_split = []
@@ -141,16 +124,32 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
 
     # Inference over of data seen so far by given model (mimicking humans seeing contexts in succession)
     for i in range(0, len(data_split)):
-        # Create headings of output CSV
-        with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
-            f.write("acc\n")
-
         model_i_data = data_split[i]
         print("Training Model:", i + 1, "of", len(data_split))
+
+        # First pass, get TopN hypotheses at each context, create fixed hypothesis space
         for j in range(len(model_i_data)):
             data_chunk = model_i_data[0:j+1]
             print("Model " + str(i + 1) + ", Context #:", j + 1, ", Inferring with Contexts #:", 0, "to", j)
-            infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, model_num=i+1)
+            infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, i+1, fixed_h_space)
+
+        # Make second pass, compute posterior probs and posterior predictive probs for hypotheses in fixed space
+        with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
+            f.write("post_pred\n")
+            # Go over all number of contexts
+            for j in range(len(model_i_data)):
+                s = 0.0
+                data_chunk = model_i_data[0:j+1]
+                curr_context = data_chunk[-1]
+                infer_contexts = data_chunk[0:-1]
+                posterior_scores = np.array([h.compute_posterior(infer_contexts) for h in fixed_h_space])
+                posterior_probs = softmax(posterior_scores)
+                # Create posterior predictive probability for this amount of data
+                for k, h in enumerate(fixed_h_space):                    
+                    s += exp(h.compute_single_likelihood(curr_context)) * posterior_probs[k]
+                print("Model " + str(i + 1) + ", Context #:", j + 1, ", Posterior Predictive:", str(s))
+                f.write(str(s) + "\n")
+            f.close()
 
 if __name__ == "__main__":
     

@@ -72,7 +72,7 @@ def plt_hm_acc(data_dir, out, exp_id, exp_type):
             continue
         path = out + exp_id + "/" + f_name
         df = pd.read_csv(path, sep="|")
-        model_accuracies.append(df['acc'])
+        model_accuracies.append(df['post_pred'])
 
     model_accuracies = np.array(model_accuracies)
     avg_mod_accuracies = pd.Series(np.average(model_accuracies, axis=0))
