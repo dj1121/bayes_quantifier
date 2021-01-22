@@ -48,8 +48,8 @@ class HypothesisA(BinaryLikelihood, LOTHypothesis):
         """
         if isinstance(other, HypothesisA):
             # Easy check if they are same value (avoids checking semantics)
-            if self.value != other.value:
-                return False
+            if self.value == other.value:
+                return True
             # Check if semantically equivalent
             for context in self.all_contexts:
                 if self.eval_q_m(context) != other.eval_q_m(context):
