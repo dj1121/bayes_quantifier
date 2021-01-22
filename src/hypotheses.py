@@ -42,8 +42,21 @@ class HypothesisA(BinaryLikelihood, LOTHypothesis):
         except EvaluationException: # catch recursion and too big
             return None
 
-    # def compute_single_likelihood(self, datum):
-    #     return log(datum.alpha if self(*datum.input) == datum.output else 1.0 - datum.alpha)
+    def semantic_equiv(self, other):
+        """
+        Compare with another hypothesis to see if they are semantically equivalent.
+        """
+        if isinstance(other, HypothesisA):
+            # Easy check if they are same value (avoids checking semantics)
+            if self.value != other.value:
+                return False
+            # Check if semantically equivalent
+            for context in self.all_contexts:
+                if self.eval_q_m(context) != other.eval_q_m(context):
+                    return False
+            return True
+
+        return NotImplemented
 
     def compute_degree_probs(self):
         """

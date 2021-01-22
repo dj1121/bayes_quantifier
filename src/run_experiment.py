@@ -49,17 +49,18 @@ def parse_args():
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=10000)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=100)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
     args = parser.parse_args()
     return args
 
-def infer(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space):
+
+def mcmc(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space):
     """
     Using data, grammar, and a starting hypothesis, takes sample_steps number
-    of samples over data and stores the best ranking hypothesis in TopN. In other
+    of samples over data and stores the best ranking hypotheses in TopN. In other
     words, conducts inference/compute posterior over data given.
 
     Parameters:
@@ -70,12 +71,12 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space
         - grammar (LOTlib3.Grammar): A PCFG grammar specifying the space of possible hypotheses
         - sample_steps (int): Number of samples to perform in inferencing over the given data
         - model_num (int): What number model we are training (since data may be split per human)
-        - fixed_h_space (set): A set of the TopN hypotheses for each context
+        - fixed_h_space (list): A set of the TopN hypotheses for each context
+        - all_contexts (list): All possible contexts model can see
 
     Returns:
         - None
     """
-    
     # Store the top N hypotheses
     TN = TopN(N=25)
 
@@ -92,9 +93,31 @@ def infer(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space
         i += 1
 
     # Add TopN hypotheses over this data to fixed hypothesis space
-    for h in TN.get_all(sorted=True):
-        fixed_h_space.append(h)
+    # Do not add semantically-duplicate ones!
+    for top_n_h in TN.get_all(sorted=True):
 
+        # Always add the first hypothesis to the fixed space
+        if len(fixed_h_space) == 0:
+            fixed_h_space.append(top_n_h)
+            continue
+
+        # The current top_n_h and its semantic equivalents in fixed space
+        semantic_equiv = [(top_n_h, top_n_h.prior)]
+        
+        # Find all semantically equivalent hypotheses fixed space
+        for fixed_h in fixed_h_space:
+            if top_n_h.semantic_equiv(fixed_h):
+                semantic_equiv.append((fixed_h, fixed_h.prior))
+        
+        # Remove all from the space (top_n_h and all equivalent)
+        for tup in semantic_equiv:
+            if tup[0] in fixed_h_space:
+                fixed_h_space.remove(tup[0])
+        
+        # Add back only the one with the best prior (if non equivalent, just adds top_n_h)
+        fixed_h_space.append(sorted(semantic_equiv, key = lambda x: x[1])[0][0])        
+
+        
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
     """
     Train as many models as there are humans, each with n contexts (training data points). 
@@ -109,6 +132,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
         - out (str): A path to where output files will be stored (model accuracy, probabilities, etc.)
         - exp_id (str): Identifier for this experiment run
         - sample_steps (int): Number of samples to perform in inferencing over the given data
+        - all_contexts (list): All possible contexts model can see
     
     Returns:
         - None
@@ -130,7 +154,10 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
         for j in range(len(model_i_data)):
             data_chunk = model_i_data[0:j+1]
             print("Model " + str(i + 1) + ", Context #:", j + 1, ", Inferring with Contexts #:", 0, "to", j)
-            infer(data_chunk, args.out, exp_id, h0, grammar, sample_steps, i+1, fixed_h_space)
+            mcmc(data_chunk, args.out, exp_id, h0, grammar, sample_steps, i+1, fixed_h_space)
+            
+        for h in fixed_h_space:
+            print(h)
 
         # Make second pass over this model's data, compute posterior probs and posterior predictive probs for hypotheses in fixed space
         with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
