@@ -128,7 +128,7 @@ def mcmc(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space)
                 fixed_h_space.remove(tup[0])
         
         # Add back only the one with the best prior (if non equivalent, just adds top_n_h)
-        fixed_h_space.append(sorted(semantic_equiv, key = lambda x: x[1])[0][0])        
+        fixed_h_space.append(sorted(semantic_equiv, key = lambda x: x[1])[-1][0])        
 
         
 def train(data, h0, n_contexts, out, exp_id, sample_steps):
@@ -187,6 +187,8 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
                     s += exp(h.compute_single_likelihood(curr_context)) * posterior_probs[k]
                 print("Model " + str(i + 1) + ", Context #:", j + 1, ", Posterior Predictive:", str(s))
                 f.write(str(s) + "\n")
+                if j == len(model_i_data) - 1:
+                    print(sorted([(h, posterior_probs[k]) for k, h in enumerate(fixed_h_space)], key=lambda tup: tup[1]))
             f.close()
 
 if __name__ == "__main__":
