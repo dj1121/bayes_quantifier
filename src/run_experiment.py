@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument("-out",type=str, help = "Path to store outputs", default ="./../results/")
     parser.add_argument("-g_type",type=str, help = "What type of grammar to use, defined in grammars.py {quant,...}. Define your own in grammars.py", default ="quant")
     parser.add_argument("-h_type",type=str, help = "What type of hypothesis to use, defined in hypotheses.py {A,B,...}. Define your own in hypotheses.py", default ="A")
-    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=100)
+    parser.add_argument("-sample_steps",type=int, help = "How many steps to run the sampler", default=500)
     parser.add_argument("-alpha",type=float, help = "Assumed noisiness of data (min = 1.0)", default=0.99)
     parser.add_argument("-lam_1",type=float, help = "How much weight to give to degree of monotonicity [0,1]", default=0.0)
     parser.add_argument("-lam_2",type=float, help = "How much weight to give to degree of conservativity [0,1]", default=0.0)
@@ -100,6 +100,19 @@ def mcmc(data, out, exp_id, h0, grammar, sample_steps, model_num, fixed_h_space)
         if len(fixed_h_space) == 0:
             fixed_h_space.append(top_n_h)
             continue
+
+        # to_remove = []
+        # add = True
+        # for fixed_h in fixed_h_space:
+        #     if top_n_h.semantic_equiv(fixed_h) and top_n_h.prior > fixed_h.prior:
+        #         to_remove.append(fixed_h)
+        #     elif top_n_h.semantic_equiv(fixed_h) and top_n_h.prior <= fixed_h.prior:
+        #         add = False
+        
+        # for h in to_remove:
+        #     fixed_h_space.remove(h)
+        # if add:
+        #     fixed_h_space.append(top_n_h)
 
         # The current top_n_h and its semantic equivalents in fixed space
         semantic_equiv = [(top_n_h, top_n_h.prior)]
@@ -155,10 +168,7 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
             data_chunk = model_i_data[0:j+1]
             print("Model " + str(i + 1) + ", Context #:", j + 1, ", Inferring with Contexts #:", 0, "to", j)
             mcmc(data_chunk, args.out, exp_id, h0, grammar, sample_steps, i+1, fixed_h_space)
-            
-        for h in fixed_h_space:
-            print(h)
-
+        
         # Make second pass over this model's data, compute posterior probs and posterior predictive probs for hypotheses in fixed space
         with open(out + exp_id + "/" + exp_id + "_" + str(i+1) +  ".csv", 'a', encoding='utf-8') as f:
             f.write("post_pred\n")
@@ -171,7 +181,9 @@ def train(data, h0, n_contexts, out, exp_id, sample_steps):
                 posterior_scores = np.array([h.compute_posterior(infer_contexts) for h in fixed_h_space])
                 posterior_probs = softmax(posterior_scores)
                 # Create posterior predictive probability for this amount of data
-                for k, h in enumerate(fixed_h_space):                    
+                for k, h in enumerate(fixed_h_space):  
+                    if j % 30 == 0:       
+                        print(h, posterior_probs[k])
                     s += exp(h.compute_single_likelihood(curr_context)) * posterior_probs[k]
                 print("Model " + str(i + 1) + ", Context #:", j + 1, ", Posterior Predictive:", str(s))
                 f.write(str(s) + "\n")

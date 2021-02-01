@@ -28,7 +28,7 @@ def create_grammar(g_type):
 
         # Set operations
         grammar.add_rule('BOOL', 'subset_', ['SET', 'SET'], 1.0) # subset_(B,A) returns if B subset of A
-        grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
+        # grammar.add_rule('BOOL', 'equal_', ['SET', 'SET'], 1.0)
         grammar.add_rule('BOOL', 'card_lt', ['CARD', 'NUM'], 1.0)
         grammar.add_rule('BOOL', 'card_gt', ['CARD', 'NUM'], 1.0)
         grammar.add_rule('BOOL', 'card_eq', ['CARD', 'NUM'], 1.0)
@@ -50,8 +50,8 @@ def create_grammar(g_type):
         for n in range(0,10):
             grammar.add_rule('NUM', str(n), None, 1.0)
 
-        grammar.add_rule('SET', 'A', None, 5.0)
-        grammar.add_rule('SET', 'B', None, 5.0)
+        grammar.add_rule('SET', 'A', None, 10.0)
+        grammar.add_rule('SET', 'B', None, 10.0)
         
         return grammar
     
