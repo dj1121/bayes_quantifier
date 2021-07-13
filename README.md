@@ -1,7 +1,4 @@
 # Semantic Universals in Bayesian Learning of Quantifiers
-This repository contains code for experiments in the following paper:
-
--To come-
 
 ## Requirements
 
